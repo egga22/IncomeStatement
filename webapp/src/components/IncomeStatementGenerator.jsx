@@ -5,6 +5,7 @@ import './IncomeStatementGenerator.css';
 const DEFAULT_PERSONALITY_ID = 'default';
 
 // Generate a random income statement based on current settings
+// Teens cannot go into debt - balance must stay >= 0
 function generateIncomeStatement(transactions, gender, count = 20) {
   // Filter transactions based on gender and active status
   const filteredTransactions = transactions.filter(t => {
@@ -17,18 +18,35 @@ function generateIncomeStatement(transactions, gender, count = 20) {
     return [];
   }
 
-  // Calculate total weight for weighted random selection
-  const totalWeight = filteredTransactions.reduce((sum, t) => sum + t.odds, 0);
+  // Separate income and expense transactions
+  const incomeTransactions = filteredTransactions.filter(t => t.price > 0);
+  const expenseTransactions = filteredTransactions.filter(t => t.price < 0);
 
   const statement = [];
   let runningBalance = 0;
 
   for (let i = 0; i < count; i++) {
+    // Filter affordable expenses (ones that won't cause debt)
+    const affordableExpenses = expenseTransactions.filter(t => 
+      runningBalance + t.price >= 0
+    );
+
+    // Combine income with affordable expenses for selection pool
+    const availableTransactions = [...incomeTransactions, ...affordableExpenses];
+
+    if (availableTransactions.length === 0) {
+      // No transactions available (shouldn't happen if there's at least one income source)
+      break;
+    }
+
+    // Calculate total weight for weighted random selection
+    const totalWeight = availableTransactions.reduce((sum, t) => sum + t.odds, 0);
+
     // Weighted random selection
     let random = Math.random() * totalWeight;
-    let selectedTransaction = filteredTransactions[0];
+    let selectedTransaction = availableTransactions[0];
 
-    for (const transaction of filteredTransactions) {
+    for (const transaction of availableTransactions) {
       random -= transaction.odds;
       if (random <= 0) {
         selectedTransaction = transaction;
