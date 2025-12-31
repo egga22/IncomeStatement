@@ -23,8 +23,8 @@ This guide explains how to deploy the Teensville Income Statement Generator to C
 | **Production branch** | `main` |
 | **Framework preset** | `None` (or `Vite` if available) |
 | **Build command** | `npm run build` |
-| **Build output directory** | `dist` |
-| **Root directory** | `webapp` |
+| **Build output directory** | `webapp/dist` |
+| **Root directory** | (leave empty/default) |
 
 6. Click **Save and Deploy**
 
@@ -57,8 +57,8 @@ This guide explains how to deploy the Teensville Income Statement Generator to C
 | Property | Value |
 |----------|-------|
 | **Build command** | `npm run build` |
-| **Build output directory** | `dist` |
-| **Root directory** | `webapp` |
+| **Build output directory** | `webapp/dist` |
+| **Root directory** | (leave empty/default) |
 | **Node.js version** | 18+ (recommended) |
 
 ## Environment Variables
@@ -78,13 +78,13 @@ After deployment, you can add a custom domain:
 
 ### Build Fails
 
-- Ensure the **Root directory** is set to `webapp`
 - Verify Node.js version is 18 or higher
-- Check that `npm run build` works locally
+- Check that `npm run build` works locally from the root directory
+- Ensure **Build output directory** is set to `webapp/dist`
 
 ### Page Not Loading
 
-- Confirm **Build output directory** is set to `dist`
+- Confirm **Build output directory** is set to `webapp/dist`
 - Check the deployment logs for any errors
 
 ## Local Development
