@@ -2,6 +2,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { defaultTransactions, defaultPersonalities } from '../data/transactions';
 import './IncomeStatementGenerator.css';
 
+const DEFAULT_PERSONALITY_ID = 'default';
+
 // Generate a random income statement based on current settings
 function generateIncomeStatement(transactions, gender, count = 20) {
   // Filter transactions based on gender and active status
@@ -68,7 +70,7 @@ export default function IncomeStatementGenerator() {
   const [gender, setGender] = useState('Any');
   const [transactionCount, setTransactionCount] = useState(20);
   const [statement, setStatement] = useState([]);
-  const [selectedPersonality, setSelectedPersonality] = useState('default');
+  const [selectedPersonality, setSelectedPersonality] = useState(DEFAULT_PERSONALITY_ID);
   const [personalities] = useState(defaultPersonalities);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -78,7 +80,7 @@ export default function IncomeStatementGenerator() {
     if (!personality) return false;
 
     // Compare gender
-    if (gender !== personality.gender && personality.id !== 'default') return true;
+    if (gender !== personality.gender && personality.id !== DEFAULT_PERSONALITY_ID) return true;
 
     // Compare transaction settings
     const baseTransactions = applyPersonality(defaultTransactions, personality);
@@ -100,7 +102,7 @@ export default function IncomeStatementGenerator() {
     const personality = personalities.find(p => p.id === personalityId);
     if (personality) {
       setSelectedPersonality(personalityId);
-      if (personality.id !== 'default') {
+      if (personality.id !== DEFAULT_PERSONALITY_ID) {
         setGender(personality.gender);
       }
       setTransactions(applyPersonality(defaultTransactions, personality));
