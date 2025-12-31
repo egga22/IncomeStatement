@@ -1,0 +1,120 @@
+// Default transactions from the original spreadsheet
+export const defaultTransactions = [
+  { id: 1, name: "Video Game", price: -70, gender: "Boy", active: true, odds: 1.0 },
+  { id: 2, name: "Art Supplies", price: -45, gender: "Any", active: false, odds: 0.9 },
+  { id: 3, name: "Trendy Jeans", price: -50, gender: "Any", active: true, odds: 0.9 },
+  { id: 4, name: "Anime Convention Ticket", price: -150, gender: "Boy", active: true, odds: 1.0 },
+  { id: 5, name: "Trendy Nike Sneakers", price: -120, gender: "Boy", active: true, odds: 1.3 },
+  { id: 6, name: "Trendy T-shirt", price: -25, gender: "Any", active: true, odds: 1.4 },
+  { id: 7, name: "Airsoft Gun", price: -30, gender: "Boy", active: false, odds: 1.0 },
+  { id: 8, name: "Skateboard", price: -100, gender: "Boy", active: true, odds: 1.0 },
+  { id: 9, name: "New Lego Set", price: -80, gender: "Any", active: false, odds: 0.9 },
+  { id: 10, name: "Poster For Room", price: -60, gender: "Any", active: false, odds: 0.9 },
+  { id: 11, name: "PS5", price: -500, gender: "Boy", active: true, odds: 2.0 },
+  { id: 12, name: "Trendy Haircut", price: -35, gender: "Any", active: false, odds: 1.0 },
+  { id: 13, name: "Trendy Baseball Cap", price: -25, gender: "Boy", active: true, odds: 1.1 },
+  { id: 14, name: "Gift For Friend", price: -25, gender: "Any", active: true, odds: 1.0 },
+  { id: 15, name: "Gift for Girlfriend", price: -35, gender: "Boy", active: true, odds: 1.2 },
+  { id: 16, name: "Trendy Graphic Hoodie", price: -45, gender: "Boy", active: true, odds: 1.1 },
+  { id: 17, name: "Trendy Backpack", price: -45, gender: "Boy", active: true, odds: 0.9 },
+  { id: 18, name: "Music Festival Ticket", price: -300, gender: "Any", active: true, odds: 1.0 },
+  { id: 19, name: "Baseball Game Ticket", price: -30, gender: "Boy", active: false, odds: 0.9 },
+  { id: 20, name: "Six Flags Visit", price: -50, gender: "Any", active: true, odds: 1.1 },
+  { id: 21, name: "Arcade Session", price: -15, gender: "Boy", active: true, odds: 0.8 },
+  { id: 22, name: "Movie Ticket", price: -15, gender: "Boy", active: true, odds: 0.9 },
+  { id: 23, name: "Robux", price: -25, gender: "Any", active: false, odds: 1.0 },
+  { id: 24, name: "Music Album", price: -10, gender: "Any", active: false, odds: 0.05 },
+  { id: 25, name: "Pokemon Card Pack", price: -15, gender: "Boy", active: true, odds: 0.7 },
+  { id: 26, name: "Funko Pop", price: -20, gender: "Girl", active: true, odds: 1.2 },
+  { id: 27, name: "Labubu", price: -40, gender: "Girl", active: true, odds: 1.6 },
+  { id: 28, name: "Stanley Cup", price: -50, gender: "Girl", active: true, odds: 1.4 },
+  { id: 29, name: "Boba", price: -8, gender: "Girl", active: true, odds: 0.4 },
+  { id: 30, name: "Mow The Lawn", price: 10, gender: "Any", active: true, odds: 1.0 },
+  { id: 31, name: "Clean The Garage", price: 30, gender: "Any", active: true, odds: 0.2 },
+  { id: 32, name: "Deep Clean the Bathroom", price: 70, gender: "Any", active: true, odds: 0.1 },
+];
+
+// Preset "personalities" with custom weights and item selections
+export const defaultPersonalities = [
+  {
+    id: "default",
+    name: "Default",
+    description: "Standard configuration from spreadsheet",
+    gender: "Any",
+    items: {} // Empty means use default values
+  },
+  {
+    id: "gamer-boy",
+    name: "Gamer Boy",
+    description: "Loves video games, tech, and gaming culture",
+    gender: "Boy",
+    items: {
+      1: { active: true, odds: 2.0 },   // Video Game - high priority
+      11: { active: true, odds: 3.0 },  // PS5 - very high priority
+      21: { active: true, odds: 1.5 },  // Arcade Session
+      23: { active: true, odds: 1.5 },  // Robux - enable and boost
+      4: { active: true, odds: 1.5 },   // Anime Convention Ticket
+      25: { active: true, odds: 1.2 },  // Pokemon Card Pack
+    }
+  },
+  {
+    id: "fashionista-girl",
+    name: "Fashionista Girl",
+    description: "Loves trendy clothes, accessories, and style",
+    gender: "Girl",
+    items: {
+      3: { active: true, odds: 2.0 },   // Trendy Jeans
+      6: { active: true, odds: 2.0 },   // Trendy T-shirt
+      27: { active: true, odds: 2.5 },  // Labubu - collectibles
+      28: { active: true, odds: 2.0 },  // Stanley Cup
+      26: { active: true, odds: 1.8 },  // Funko Pop
+      29: { active: true, odds: 1.5 },  // Boba
+    }
+  },
+  {
+    id: "social-butterfly",
+    name: "Social Butterfly",
+    description: "Loves hanging out with friends and experiences",
+    gender: "Any",
+    items: {
+      20: { active: true, odds: 2.0 },  // Six Flags Visit
+      18: { active: true, odds: 1.8 },  // Music Festival Ticket
+      14: { active: true, odds: 2.0 },  // Gift For Friend
+      29: { active: true, odds: 2.0 },  // Boba
+      22: { active: true, odds: 1.5 },  // Movie Ticket
+    }
+  },
+  {
+    id: "hard-worker",
+    name: "Hard Worker",
+    description: "Focused on earning money through chores",
+    gender: "Any",
+    items: {
+      30: { active: true, odds: 3.0 },  // Mow The Lawn
+      31: { active: true, odds: 2.5 },  // Clean The Garage
+      32: { active: true, odds: 2.0 },  // Deep Clean the Bathroom
+      // Lower odds for spending
+      1: { active: true, odds: 0.3 },
+      3: { active: true, odds: 0.3 },
+      11: { active: false },
+      18: { active: false },
+    }
+  },
+  {
+    id: "big-spender",
+    name: "Big Spender",
+    description: "Goes for the expensive items",
+    gender: "Any",
+    items: {
+      11: { active: true, odds: 2.5 },  // PS5
+      5: { active: true, odds: 2.0 },   // Trendy Nike Sneakers
+      18: { active: true, odds: 2.0 },  // Music Festival Ticket
+      4: { active: true, odds: 1.8 },   // Anime Convention Ticket
+      8: { active: true, odds: 1.5 },   // Skateboard
+      // Lower odds for earning
+      30: { active: true, odds: 0.5 },
+      31: { active: true, odds: 0.3 },
+      32: { active: true, odds: 0.2 },
+    }
+  },
+];
