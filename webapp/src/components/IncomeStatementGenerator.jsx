@@ -4,11 +4,16 @@ import './IncomeStatementGenerator.css';
 
 const DEFAULT_PERSONALITY_ID = 'default';
 
+// Occurrence value constants
+const OCCURRENCE_UNSET = -2;    // Treated as no limit
+const OCCURRENCE_ONCE = -1;     // Can only appear once
+const OCCURRENCE_NO_LIMIT = 0;  // No restriction
+
 // Format occurrence value for display
 function formatOccurrence(occurrence) {
-  if (occurrence === -2) return 'Unset';
-  if (occurrence === -1) return 'Once only';
-  if (occurrence === 0) return 'No limit';
+  if (occurrence === OCCURRENCE_UNSET) return 'Unset';
+  if (occurrence === OCCURRENCE_ONCE) return 'Once only';
+  if (occurrence === OCCURRENCE_NO_LIMIT) return 'No limit';
   return `${occurrence} apart`;
 }
 
@@ -18,14 +23,14 @@ function canSelectTransaction(transaction, currentIndex, lastOccurrenceMap) {
   const occurrence = transaction.occurrence;
   
   // -2 (unset) or 0 means no restriction
-  if (occurrence === -2 || occurrence === 0) {
+  if (occurrence === OCCURRENCE_UNSET || occurrence === OCCURRENCE_NO_LIMIT) {
     return true;
   }
   
   const lastOccurrence = lastOccurrenceMap.get(transaction.id);
   
   // -1 means can only appear once
-  if (occurrence === -1) {
+  if (occurrence === OCCURRENCE_ONCE) {
     return lastOccurrence === undefined;
   }
   
