@@ -4,6 +4,43 @@ import './IncomeStatementGenerator.css';
 
 const DEFAULT_PERSONALITY_ID = 'default';
 
+// Format occurrence value for display
+function formatOccurrence(occurrence) {
+  if (occurrence === -2) return 'Unset';
+  if (occurrence === -1) return 'Once only';
+  if (occurrence === 0) return 'No limit';
+  return `${occurrence} apart`;
+}
+
+// Check if a transaction can be selected based on occurrence rules
+// occurrence: -2 = unset (treated as 0), -1 = can only appear once, 0 = no restriction, x > 0 = at least x items between occurrences
+function canSelectTransaction(transaction, currentIndex, lastOccurrenceMap) {
+  const occurrence = transaction.occurrence;
+  
+  // -2 (unset) or 0 means no restriction
+  if (occurrence === -2 || occurrence === 0) {
+    return true;
+  }
+  
+  const lastOccurrence = lastOccurrenceMap.get(transaction.id);
+  
+  // -1 means can only appear once
+  if (occurrence === -1) {
+    return lastOccurrence === undefined;
+  }
+  
+  // Positive value means at least x items between occurrences
+  if (occurrence > 0) {
+    if (lastOccurrence === undefined) {
+      return true;
+    }
+    const itemsBetween = currentIndex - lastOccurrence - 1;
+    return itemsBetween >= occurrence;
+  }
+  
+  return true;
+}
+
 // Generate a random income statement based on current settings
 // Teens cannot go into debt - balance must stay >= 0
 function generateIncomeStatement(transactions, gender, count = 20) {
@@ -24,6 +61,8 @@ function generateIncomeStatement(transactions, gender, count = 20) {
 
   const statement = [];
   let runningBalance = 0;
+  // Track last occurrence index for each transaction (for occurrence rules)
+  const lastOccurrenceMap = new Map();
 
   for (let i = 0; i < count; i++) {
     // Filter affordable expenses (ones that won't cause debt)
@@ -32,7 +71,12 @@ function generateIncomeStatement(transactions, gender, count = 20) {
     );
 
     // Combine income with affordable expenses for selection pool
-    const availableTransactions = [...incomeTransactions, ...affordableExpenses];
+    let availableTransactions = [...incomeTransactions, ...affordableExpenses];
+    
+    // Filter based on occurrence rules
+    availableTransactions = availableTransactions.filter(t => 
+      canSelectTransaction(t, i, lastOccurrenceMap)
+    );
 
     if (availableTransactions.length === 0) {
       // No transactions available (shouldn't happen if there's at least one income source)
@@ -55,6 +99,9 @@ function generateIncomeStatement(transactions, gender, count = 20) {
     }
 
     runningBalance += selectedTransaction.price;
+    
+    // Update last occurrence index for the selected transaction
+    lastOccurrenceMap.set(selectedTransaction.id, i);
 
     statement.push({
       id: i + 1,
@@ -91,6 +138,7 @@ export default function IncomeStatementGenerator() {
   const [selectedPersonality, setSelectedPersonality] = useState(DEFAULT_PERSONALITY_ID);
   const [personalities] = useState(defaultPersonalities);
   const [showSettings, setShowSettings] = useState(false);
+  const [showOccurrence, setShowOccurrence] = useState(false);
 
   // Check if current settings differ from selected personality
   const hasModifications = useMemo(() => {
@@ -237,6 +285,16 @@ export default function IncomeStatementGenerator() {
             >
               {showSettings ? '▼ Hide Item Settings' : '▶ Show Item Settings'}
             </button>
+            <div className="setting-group checkbox-setting">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={showOccurrence}
+                  onChange={(e) => setShowOccurrence(e.target.checked)}
+                />
+                <span>Show Occurrence Values</span>
+              </label>
+            </div>
           </section>
         </aside>
 
@@ -325,6 +383,9 @@ export default function IncomeStatementGenerator() {
                 </div>
                 <div className="item-details">
                   <span className="item-gender">{t.gender}</span>
+                  {showOccurrence && (
+                    <span className="item-occurrence">{formatOccurrence(t.occurrence)}</span>
+                  )}
                   <div className="odds-control">
                     <label>Weight:</label>
                     <input
