@@ -23,8 +23,8 @@ export const defaultTransactions = [
   { id: 20, name: "Six Flags Visit", price: -50, gender: "Any", active: true, odds: 1.0 },
   { id: 21, name: "Arcade Session", price: -15, gender: "Boy", active: true, odds: 1.0 },
   { id: 22, name: "Movie Ticket", price: -15, gender: "Boy", active: true, odds: 1.0 },
-  { id: 23, name: "Robux", price: -25, gender: "Any", active: true, odds: 1.0 },
-  { id: 24, name: "Music Album", price: -10, gender: "Any", active: true, odds: 1.0 },
+  { id: 23, name: "Robux", price: -25, gender: "Any", active: false, odds: 1.0 },
+  { id: 24, name: "Music Album", price: -10, gender: "Any", active: false, odds: 1.0 },
   { id: 25, name: "Pokemon Card Pack", price: -15, gender: "Boy", active: true, odds: 1.0 },
   { id: 26, name: "Funko Pop", price: -20, gender: "Girl", active: true, odds: 1.0 },
   { id: 27, name: "Labubu", price: -40, gender: "Girl", active: true, odds: 1.0 },
@@ -50,12 +50,12 @@ export const defaultPersonalities = [
     description: "Loves video games, tech, and gaming culture",
     gender: "Boy",
     items: {
-      1: { active: true, odds: 2.0 },   // Video Game - high priority
-      11: { active: true, odds: 3.0 },  // PS5 - very high priority
-      21: { active: true, odds: 1.5 },  // Arcade Session
+      1: { active: true, odds: 7.0 },   // Video Game - high priority
+      11: { active: true, odds: 5.0 },  // PS5 - very high priority
+      21: { active: true, odds: 2 },  // Arcade Session
       23: { active: true, odds: 1.5 },  // Robux - enable and boost
-      4: { active: true, odds: 1.5 },   // Anime Convention Ticket
-      25: { active: true, odds: 1.2 },  // Pokemon Card Pack
+      4: { active: true, odds: 1 },   // Anime Convention Ticket
+      25: { active: true, odds: 1 },  // Pokemon Card Pack
     }
   },
   {
@@ -66,10 +66,10 @@ export const defaultPersonalities = [
     items: {
       3: { active: true, odds: 2.0 },   // Trendy Jeans
       6: { active: true, odds: 2.0 },   // Trendy T-shirt
-      27: { active: true, odds: 2.5 },  // Labubu - collectibles
-      28: { active: true, odds: 2.0 },  // Stanley Cup
-      26: { active: true, odds: 1.8 },  // Funko Pop
-      29: { active: true, odds: 1.5 },  // Boba
+      27: { active: true, odds: 6 },  // Labubu - collectibles
+      28: { active: true, odds: 6 },  // Stanley Cup
+      26: { active: true, odds: 6 },  // Funko Pop
+      29: { active: true, odds: 5 },  // Boba
     }
   },
   {
@@ -78,11 +78,12 @@ export const defaultPersonalities = [
     description: "Loves hanging out with friends and experiences",
     gender: "Any",
     items: {
-      20: { active: true, odds: 2.0 },  // Six Flags Visit
-      18: { active: true, odds: 1.8 },  // Music Festival Ticket
-      14: { active: true, odds: 2.0 },  // Gift For Friend
-      29: { active: true, odds: 2.0 },  // Boba
-      22: { active: true, odds: 1.5 },  // Movie Ticket
+      20: { active: true, odds: 4 },  // Six Flags Visit
+      18: { active: true, odds: 5 },  // Music Festival Ticket
+      14: { active: true, odds: 6.0 },  // Gift For Friend
+      29: { active: true, odds: 8.0 },  // Boba
+      22: { active: true, odds: 7 },  // Movie Ticket
+      21: { active: true, odds: 4 },  // Arcade Session
     }
   },
   {
