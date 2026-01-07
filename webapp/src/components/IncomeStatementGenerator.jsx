@@ -4,9 +4,11 @@ import './IncomeStatementGenerator.css';
 
 const DEFAULT_PERSONALITY_ID = 'default';
 
+const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 // Generate a random income statement based on current settings
 // Teens cannot go into debt - balance must stay >= 0
-function generateIncomeStatement(transactions, gender, count = 20, startingBalance = 0) {
+function generateIncomeStatement(transactions, gender, count = 20, startingBalance = 0, allowanceAmount = 0, allowanceDay = 0) {
   // Filter transactions based on gender and active status
   const filteredTransactions = transactions.filter(t => {
     if (!t.active) return false;
@@ -24,45 +26,84 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
   const statement = [];
   let runningBalance = startingBalance;
+  let currentDay = 0; // Start on Sunday (0)
+  let transactionIndex = 0;
 
-  for (let i = 0; i < count; i++) {
-    // Filter affordable expenses (ones that won't cause debt)
-    const affordableExpenses = expenseTransactions.filter(t => 
-      runningBalance + t.price >= 0
-    );
+  // Helper to check if this is the first transaction of a day
+  const isFirstOfDay = (dayName) => 
+    statement.length === 0 || statement[statement.length - 1].dayOfWeek !== dayName;
 
-    // Combine income with affordable expenses for selection pool
-    const availableTransactions = [...incomeTransactions, ...affordableExpenses];
+  // Target number of transactions (not counting allowances)
+  let regularTransactionsAdded = 0;
 
-    if (availableTransactions.length === 0) {
-      // No transactions available (shouldn't happen if there's at least one income source)
-      break;
+  while (regularTransactionsAdded < count) {
+    const dayName = DAYS_OF_WEEK[currentDay];
+
+    // Add allowance if it's the allowance day and allowance is enabled
+    if (isFirstOfDay(dayName) && allowanceAmount > 0 && currentDay === allowanceDay) {
+      runningBalance += allowanceAmount;
+      transactionIndex++;
+      statement.push({
+        id: transactionIndex,
+        transactionId: 'allowance',
+        name: 'Allowance',
+        balanceUpdate: allowanceAmount,
+        newBalance: runningBalance,
+        dayOfWeek: dayName,
+        isNewDay: true,
+      });
     }
 
-    // Calculate total weight for weighted random selection
-    const totalWeight = availableTransactions.reduce((sum, t) => sum + t.odds, 0);
+    // Determine how many transactions to add for this day (1-3, randomly)
+    const transactionsForDay = Math.floor(Math.random() * 3) + 1;
 
-    // Weighted random selection
-    let random = Math.random() * totalWeight;
-    let selectedTransaction = availableTransactions[0];
+    for (let dayTx = 0; dayTx < transactionsForDay && regularTransactionsAdded < count; dayTx++) {
+      // Filter affordable expenses (ones that won't cause debt)
+      const affordableExpenses = expenseTransactions.filter(t => 
+        runningBalance + t.price >= 0
+      );
 
-    for (const transaction of availableTransactions) {
-      random -= transaction.odds;
-      if (random <= 0) {
-        selectedTransaction = transaction;
+      // Combine income with affordable expenses for selection pool
+      const availableTransactions = [...incomeTransactions, ...affordableExpenses];
+
+      if (availableTransactions.length === 0) {
+        // No transactions available (shouldn't happen if there's at least one income source)
         break;
       }
+
+      // Calculate total weight for weighted random selection
+      const totalWeight = availableTransactions.reduce((sum, t) => sum + t.odds, 0);
+
+      // Weighted random selection
+      let random = Math.random() * totalWeight;
+      let selectedTransaction = availableTransactions[0];
+
+      for (const transaction of availableTransactions) {
+        random -= transaction.odds;
+        if (random <= 0) {
+          selectedTransaction = transaction;
+          break;
+        }
+      }
+
+      runningBalance += selectedTransaction.price;
+      transactionIndex++;
+
+      statement.push({
+        id: transactionIndex,
+        transactionId: selectedTransaction.id,
+        name: selectedTransaction.name,
+        balanceUpdate: selectedTransaction.price,
+        newBalance: runningBalance,
+        dayOfWeek: dayName,
+        isNewDay: isFirstOfDay(dayName),
+      });
+
+      regularTransactionsAdded++;
     }
 
-    runningBalance += selectedTransaction.price;
-
-    statement.push({
-      id: i + 1,
-      transactionId: selectedTransaction.id,
-      name: selectedTransaction.name,
-      balanceUpdate: selectedTransaction.price,
-      newBalance: runningBalance,
-    });
+    // Move to the next day (cycle through the week)
+    currentDay = (currentDay + 1) % 7;
   }
 
   return statement;
@@ -88,6 +129,8 @@ export default function IncomeStatementGenerator() {
   const [gender, setGender] = useState('Any');
   const [transactionCount, setTransactionCount] = useState(20);
   const [startingBalance, setStartingBalance] = useState(0);
+  const [allowanceAmount, setAllowanceAmount] = useState(0);
+  const [allowanceDay, setAllowanceDay] = useState(0); // Sunday by default
   const [statement, setStatement] = useState([]);
   const [selectedPersonality, setSelectedPersonality] = useState(DEFAULT_PERSONALITY_ID);
   const [personalities] = useState(defaultPersonalities);
@@ -113,9 +156,9 @@ export default function IncomeStatementGenerator() {
   }, [transactions, gender, selectedPersonality, personalities]);
 
   const handleGenerate = useCallback(() => {
-    const newStatement = generateIncomeStatement(transactions, gender, transactionCount, startingBalance);
+    const newStatement = generateIncomeStatement(transactions, gender, transactionCount, startingBalance, allowanceAmount, allowanceDay);
     setStatement(newStatement);
-  }, [transactions, gender, transactionCount, startingBalance]);
+  }, [transactions, gender, transactionCount, startingBalance, allowanceAmount, allowanceDay]);
 
   const handlePersonalityChange = useCallback((personalityId) => {
     const personality = personalities.find(p => p.id === personalityId);
@@ -235,6 +278,25 @@ export default function IncomeStatementGenerator() {
                 onChange={(e) => setTransactionCount(parseInt(e.target.value) || 20)}
               />
             </div>
+            <div className="setting-group">
+              <label>Weekly Allowance ($):</label>
+              <input
+                type="number"
+                min="0"
+                value={allowanceAmount}
+                onChange={(e) => setAllowanceAmount(parseInt(e.target.value) || 0)}
+              />
+            </div>
+            {allowanceAmount > 0 && (
+              <div className="setting-group">
+                <label>Allowance Day:</label>
+                <select value={allowanceDay} onChange={(e) => setAllowanceDay(parseInt(e.target.value))}>
+                  {DAYS_OF_WEEK.map((day, index) => (
+                    <option key={day} value={index}>{day}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <button className="generate-btn" onClick={handleGenerate}>
               🎲 Generate Income Statement
             </button>
@@ -273,6 +335,7 @@ export default function IncomeStatementGenerator() {
                   <thead>
                     <tr>
                       <th>#</th>
+                      <th>Day</th>
                       <th>Transaction</th>
                       <th>Balance Update</th>
                       <th>New Balance</th>
@@ -282,9 +345,10 @@ export default function IncomeStatementGenerator() {
                     {statement.map((row) => (
                       <tr
                         key={row.id}
-                        className={row.balanceUpdate > 0 ? 'income-row' : 'expense-row'}
+                        className={`${row.balanceUpdate > 0 ? 'income-row' : 'expense-row'} ${row.isNewDay ? 'new-day-row' : ''}`}
                       >
                         <td>{row.id}</td>
+                        <td className="day-cell">{row.isNewDay ? row.dayOfWeek : ''}</td>
                         <td>{row.name}</td>
                         <td className={row.balanceUpdate > 0 ? 'positive' : 'negative'}>
                           {row.balanceUpdate > 0 ? '+' : ''}${row.balanceUpdate}
