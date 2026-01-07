@@ -5,3 +5,4 @@ Fix any gender setting
 Variable pricing
 Occurence
 timing
+intentions
