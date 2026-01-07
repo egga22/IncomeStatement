@@ -290,6 +290,20 @@
   background: #fff3e0;
 }
 
+.new-day-row {
+  border-top: 3px solid #667eea;
+}
+
+.new-day-row td:first-child {
+  position: relative;
+}
+
+.day-cell {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 0.9rem;
+}
+
 .positive {
   color: #2e7d32;
   font-weight: 500;
