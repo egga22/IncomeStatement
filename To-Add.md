@@ -1,0 +1,6 @@
+This file should NOT be referenced by ai agents unless expicity stated in prompt.
+
+Better algorithm (make it less random, more realistic. or at least controlled
+Fix any gender setting
+Variable pricing
+Occurence
