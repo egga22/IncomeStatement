@@ -6,7 +6,7 @@ const DEFAULT_PERSONALITY_ID = 'default';
 
 // Generate a random income statement based on current settings
 // Teens cannot go into debt - balance must stay >= 0
-function generateIncomeStatement(transactions, gender, count = 20) {
+function generateIncomeStatement(transactions, gender, count = 20, startingBalance = 0) {
   // Filter transactions based on gender and active status
   const filteredTransactions = transactions.filter(t => {
     if (!t.active) return false;
@@ -23,7 +23,7 @@ function generateIncomeStatement(transactions, gender, count = 20) {
   const expenseTransactions = filteredTransactions.filter(t => t.price < 0);
 
   const statement = [];
-  let runningBalance = 0;
+  let runningBalance = startingBalance;
 
   for (let i = 0; i < count; i++) {
     // Filter affordable expenses (ones that won't cause debt)
@@ -87,6 +87,7 @@ export default function IncomeStatementGenerator() {
   const [transactions, setTransactions] = useState(defaultTransactions);
   const [gender, setGender] = useState('Any');
   const [transactionCount, setTransactionCount] = useState(20);
+  const [startingBalance, setStartingBalance] = useState(0);
   const [statement, setStatement] = useState([]);
   const [selectedPersonality, setSelectedPersonality] = useState(DEFAULT_PERSONALITY_ID);
   const [personalities] = useState(defaultPersonalities);
@@ -112,9 +113,9 @@ export default function IncomeStatementGenerator() {
   }, [transactions, gender, selectedPersonality, personalities]);
 
   const handleGenerate = useCallback(() => {
-    const newStatement = generateIncomeStatement(transactions, gender, transactionCount);
+    const newStatement = generateIncomeStatement(transactions, gender, transactionCount, startingBalance);
     setStatement(newStatement);
-  }, [transactions, gender, transactionCount]);
+  }, [transactions, gender, transactionCount, startingBalance]);
 
   const handlePersonalityChange = useCallback((personalityId) => {
     const personality = personalities.find(p => p.id === personalityId);
@@ -207,6 +208,15 @@ export default function IncomeStatementGenerator() {
 
           <section className="section">
             <h2>⚙️ Quick Settings</h2>
+            <div className="setting-group">
+              <label>Starting Balance:</label>
+              <input
+                type="number"
+                min="0"
+                value={startingBalance}
+                onChange={(e) => setStartingBalance(parseInt(e.target.value) || 0)}
+              />
+            </div>
             <div className="setting-group">
               <label>Gender:</label>
               <select value={gender} onChange={(e) => handleGenderChange(e.target.value)}>
