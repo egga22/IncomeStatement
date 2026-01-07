@@ -4,3 +4,4 @@ Better algorithm (make it less random, more realistic. or at least controlled
 Fix any gender setting
 Variable pricing
 Occurence
+timing
