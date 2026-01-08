@@ -371,17 +371,8 @@ export default function IncomeStatementGenerator() {
     navigator.clipboard.writeText(personalityCode).then(() => {
       alert('Personality code copied to clipboard! You can add it to the defaultPersonalities array.');
     }).catch(() => {
-      // Fallback: show in a text area
-      const textarea = document.createElement('textarea');
-      textarea.value = personalityCode;
-      textarea.style.position = 'fixed';
-      textarea.style.top = '0';
-      textarea.style.left = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      alert('Personality code copied to clipboard! You can add it to the defaultPersonalities array.');
+      // Fallback: show the code in an alert for manual copy
+      alert('Could not copy to clipboard automatically. Please copy the code below:\n\n' + personalityCode);
     });
   }, [transactions, gender]);
 
