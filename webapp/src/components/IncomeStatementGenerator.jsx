@@ -4,7 +4,7 @@ import './IncomeStatementGenerator.css';
 
 const DEFAULT_PERSONALITY_ID = 'default';
 
-const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 // Probability constants for intentions
 const INTENSE_INTENTION_CHANCE = 0.1; // 10% chance an intention is intense
@@ -17,7 +17,9 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
   // Filter transactions based on gender and active status
   const filteredTransactions = transactions.filter(t => {
     if (!t.active) return false;
-    if (gender === 'Any') return true;
+    // When gender is "Any", only pick items marked as "Any"
+    if (gender === 'Any') return t.gender === 'Any';
+    // For Boy/Girl, pick items marked as that gender OR "Any"
     return t.gender === 'Any' || t.gender === gender;
   });
 
@@ -31,8 +33,11 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
   const statement = [];
   let runningBalance = startingBalance;
-  let currentDay = 0; // Start on Sunday (0)
+  let currentDay = 0; // Start on Monday (0)
   let transactionIndex = 0;
+
+  // Track last occurrence day for each transaction with frequency limits
+  const lastOccurrence = {}; // { transactionId: dayIndex }
 
   // Intention state
   let activeIntention = null; // { item, type, willGiveUp }
@@ -41,6 +46,14 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
   // Helper to check if this is the first transaction of a day
   const isFirstOfDay = (dayName) => 
     statement.length === 0 || statement[statement.length - 1].dayOfWeek !== dayName;
+
+  // Helper to check if a transaction can occur based on frequency
+  const canOccur = (transaction, currentDayIndex) => {
+    if (transaction.frequency === "None") return true;
+    if (!lastOccurrence[transaction.id]) return true;
+    const daysSince = currentDayIndex - lastOccurrence[transaction.id];
+    return daysSince >= transaction.frequency;
+  };
 
   // Helper to select a weighted random transaction
   const selectWeightedTransaction = (availableTransactions) => {
@@ -154,13 +167,13 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
       if (activeIntention) {
         if (activeIntention.type === INTENTION_TYPE.INTENSE) {
           // Intense intention: only earn money, no spending
-          availableTransactions = [...incomeTransactions];
+          availableTransactions = incomeTransactions.filter(t => canOccur(t, currentDay));
         } else {
           // Standard intention: still buy other things
           const affordableExpenses = expenseTransactions.filter(t => 
-            runningBalance + t.price >= 0 && t.id !== activeIntention.item.id
+            runningBalance + t.price >= 0 && t.id !== activeIntention.item.id && canOccur(t, currentDay)
           );
-          availableTransactions = [...incomeTransactions, ...affordableExpenses];
+          availableTransactions = [...incomeTransactions.filter(t => canOccur(t, currentDay)), ...affordableExpenses];
           
           // Check if teen gives up due to impulse spending (predetermined)
           if (activeIntention.willGiveUp && affordableExpenses.length > 0 && Math.random() < GIVE_UP_TRIGGER_CHANCE) {
@@ -186,7 +199,7 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
         // No active intention: teen doesn't do chores (no motivation)
         // Only expenses are available
         const affordableExpenses = expenseTransactions.filter(t => 
-          runningBalance + t.price >= 0
+          runningBalance + t.price >= 0 && canOccur(t, currentDay)
         );
         availableTransactions = [...affordableExpenses];
       }
@@ -201,6 +214,9 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
       runningBalance += selectedTransaction.price;
       transactionIndex++;
+      
+      // Record when this transaction occurred
+      lastOccurrence[selectedTransaction.id] = currentDay;
 
       statement.push({
         id: transactionIndex,
@@ -237,6 +253,7 @@ function applyPersonality(baseTransactions, personality) {
         ...t,
         active: override.active !== undefined ? override.active : t.active,
         odds: override.odds !== undefined ? override.odds : t.odds,
+        frequency: override.frequency !== undefined ? override.frequency : t.frequency,
       };
     }
     return { ...t };
@@ -249,7 +266,7 @@ export default function IncomeStatementGenerator() {
   const [transactionCount, setTransactionCount] = useState(20);
   const [startingBalance, setStartingBalance] = useState(0);
   const [allowanceAmount, setAllowanceAmount] = useState(0);
-  const [allowanceDay, setAllowanceDay] = useState(0); // Sunday by default
+  const [allowanceDay, setAllowanceDay] = useState(4); // Friday by default
   const [statement, setStatement] = useState([]);
   const [selectedPersonality, setSelectedPersonality] = useState(DEFAULT_PERSONALITY_ID);
   const [personalities] = useState(defaultPersonalities);
@@ -267,7 +284,7 @@ export default function IncomeStatementGenerator() {
     const baseTransactions = applyPersonality(defaultTransactions, personality);
     for (const t of transactions) {
       const base = baseTransactions.find(bt => bt.id === t.id);
-      if (base && (t.active !== base.active || t.odds !== base.odds)) {
+      if (base && (t.active !== base.active || t.odds !== base.odds || t.frequency !== base.frequency)) {
         return true;
       }
     }
@@ -304,6 +321,69 @@ export default function IncomeStatementGenerator() {
       );
     }
   }, []);
+
+  const handleFrequencyChange = useCallback((id, newFrequency) => {
+    setTransactions(prev =>
+      prev.map(t => t.id === id ? { ...t, frequency: newFrequency } : t)
+    );
+  }, []);
+
+  const handleExportPersonality = useCallback(() => {
+    // Create a personality object based on current settings
+    const personalityName = prompt("Enter a name for this personality:");
+    if (!personalityName) return;
+
+    const personalityId = personalityName.toLowerCase().replace(/\s+/g, '-');
+    const personalityDescription = prompt("Enter a description for this personality:");
+    if (!personalityDescription) return;
+
+    // Build items object with only the transactions that differ from defaults
+    const items = {};
+    transactions.forEach(t => {
+      const defaultTx = defaultTransactions.find(dt => dt.id === t.id);
+      if (defaultTx) {
+        const isDifferent = 
+          t.active !== defaultTx.active || 
+          t.odds !== defaultTx.odds ||
+          t.frequency !== defaultTx.frequency;
+        
+        if (isDifferent) {
+          items[t.id] = {
+            active: t.active,
+            odds: t.odds,
+          };
+          if (t.frequency !== defaultTx.frequency) {
+            items[t.id].frequency = t.frequency;
+          }
+        }
+      }
+    });
+
+    const personalityCode = `{
+  id: "${personalityId}",
+  name: "${personalityName}",
+  description: "${personalityDescription}",
+  gender: "${gender}",
+  items: ${JSON.stringify(items, null, 4)}
+}`;
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(personalityCode).then(() => {
+      alert('Personality code copied to clipboard! You can add it to the defaultPersonalities array.');
+    }).catch(() => {
+      // Fallback: show in a text area
+      const textarea = document.createElement('textarea');
+      textarea.value = personalityCode;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert('Personality code copied to clipboard! You can add it to the defaultPersonalities array.');
+    });
+  }, [transactions, gender]);
 
   const handleGenderChange = useCallback((newGender) => {
     setGender(newGender);
@@ -506,6 +586,7 @@ export default function IncomeStatementGenerator() {
           <h2>📝 Item Settings</h2>
           <p className="settings-help">
             Toggle items on/off and adjust weights. Higher weights = more likely to appear.
+            Frequency limits how often an item can occur (in days, or "None" for unlimited).
           </p>
           <div className="items-grid">
             {transactions.map(t => (
@@ -527,22 +608,44 @@ export default function IncomeStatementGenerator() {
                   </span>
                 </div>
                 <div className="item-details">
-                  <span className="item-gender">{t.gender}</span>
-                  <div className="odds-control">
-                    <label>Weight:</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={t.odds}
-                      onChange={(e) => handleOddsChange(t.id, e.target.value)}
+                  <div className="item-details-row">
+                    <span className="item-gender">{t.gender}</span>
+                    <div className="odds-control">
+                      <label>Weight:</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        value={t.odds}
+                        onChange={(e) => handleOddsChange(t.id, e.target.value)}
+                        disabled={!t.active}
+                      />
+                    </div>
+                  </div>
+                  <div className="frequency-control">
+                    <label>Frequency:</label>
+                    <select
+                      value={t.frequency}
+                      onChange={(e) => handleFrequencyChange(t.id, e.target.value === "None" ? "None" : parseInt(e.target.value))}
                       disabled={!t.active}
-                    />
+                    >
+                      <option value="None">None</option>
+                      <option value="7">7 days</option>
+                      <option value="14">14 days</option>
+                      <option value="30">30 days</option>
+                      <option value="60">60 days</option>
+                      <option value="90">90 days</option>
+                    </select>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+          <div className="export-section">
+            <button className="export-btn" onClick={handleExportPersonality}>
+              📋 Export as Personality
+            </button>
           </div>
         </section>
       )}
