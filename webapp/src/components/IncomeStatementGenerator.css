@@ -298,6 +298,21 @@
   position: relative;
 }
 
+.intention-row {
+  background: #e8f5e9 !important;
+  font-style: italic;
+}
+
+.intention-start-row {
+  background: #fff8e1 !important;
+  border-left: 4px solid #ffc107;
+}
+
+.intention-giveup-row {
+  background: #fce4ec !important;
+  border-left: 4px solid #e91e63;
+}
+
 .day-cell {
   font-weight: 600;
   color: #667eea;

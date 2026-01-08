@@ -1,3 +1,9 @@
+// Intention types
+export const INTENTION_TYPE = {
+  STANDARD: 'standard',  // Teen still buys other things while saving
+  INTENSE: 'intense',    // Teen only earns until goal is reached (rare)
+};
+
 // Default transactions from the original spreadsheet
 // All items enabled by default with 1.0 probability modifier
 export const defaultTransactions = [
