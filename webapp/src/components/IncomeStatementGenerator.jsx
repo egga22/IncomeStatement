@@ -1,10 +1,15 @@
 import { useState, useCallback, useMemo } from 'react';
-import { defaultTransactions, defaultPersonalities } from '../data/transactions';
+import { defaultTransactions, defaultPersonalities, INTENTION_TYPE } from '../data/transactions';
 import './IncomeStatementGenerator.css';
 
 const DEFAULT_PERSONALITY_ID = 'default';
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Probability constants for intentions
+const INTENSE_INTENTION_CHANCE = 0.1; // 10% chance an intention is intense
+const GIVE_UP_CHANCE = 0.1; // 10% chance to give up on standard intentions
+const GIVE_UP_TRIGGER_CHANCE = 0.3; // 30% chance per opportunity for a predetermined give-up to trigger
 
 // Generate a random income statement based on current settings
 // Teens cannot go into debt - balance must stay >= 0
@@ -29,11 +34,60 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
   let currentDay = 0; // Start on Sunday (0)
   let transactionIndex = 0;
 
+  // Intention state
+  let activeIntention = null; // { item, type, willGiveUp }
+  let daysSinceIntentionComplete = Infinity; // Start with Infinity to allow first intention
+
   // Helper to check if this is the first transaction of a day
   const isFirstOfDay = (dayName) => 
     statement.length === 0 || statement[statement.length - 1].dayOfWeek !== dayName;
 
-  // Target number of transactions (not counting allowances)
+  // Helper to select a weighted random transaction
+  const selectWeightedTransaction = (availableTransactions) => {
+    if (availableTransactions.length === 0) return null;
+    const totalWeight = availableTransactions.reduce((sum, t) => sum + t.odds, 0);
+    let random = Math.random() * totalWeight;
+    let selectedTransaction = availableTransactions[0];
+    for (const transaction of availableTransactions) {
+      random -= transaction.odds;
+      if (random <= 0) {
+        selectedTransaction = transaction;
+        break;
+      }
+    }
+    return selectedTransaction;
+  };
+
+  // Helper to create an intention for an unaffordable expense
+  const createIntention = (item) => {
+    const isIntense = Math.random() < INTENSE_INTENTION_CHANCE;
+    const type = isIntense ? INTENTION_TYPE.INTENSE : INTENTION_TYPE.STANDARD;
+    // For standard intentions, predetermine if they will give up
+    const willGiveUp = type === INTENTION_TYPE.STANDARD && Math.random() < GIVE_UP_CHANCE;
+    return { item, type, willGiveUp };
+  };
+
+  // Helper to complete an intention and add transaction to statement
+  const completeIntention = (dayName, isFirstTransaction) => {
+    runningBalance += activeIntention.item.price;
+    transactionIndex++;
+    statement.push({
+      id: transactionIndex,
+      transactionId: activeIntention.item.id,
+      name: `${activeIntention.item.name} (Intention Complete!)`,
+      balanceUpdate: activeIntention.item.price,
+      newBalance: runningBalance,
+      dayOfWeek: dayName,
+      isNewDay: isFirstTransaction,
+      isIntention: true,
+      intentionType: activeIntention.type,
+    });
+    regularTransactionsAdded++;
+    activeIntention = null;
+    daysSinceIntentionComplete = 0;
+  };
+
+  // Target number of transactions (not counting allowances and intention events)
   let regularTransactionsAdded = 0;
 
   while (regularTransactionsAdded < count) {
@@ -54,37 +108,96 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
       });
     }
 
+    // Check if intention can be completed (balance reached)
+    if (activeIntention && runningBalance >= Math.abs(activeIntention.item.price)) {
+      completeIntention(dayName, isFirstOfDay(dayName));
+      
+      if (regularTransactionsAdded >= count) break;
+    }
+
     // Determine how many transactions to add for this day (1-3, randomly)
     const transactionsForDay = Math.floor(Math.random() * 3) + 1;
 
     for (let dayTx = 0; dayTx < transactionsForDay && regularTransactionsAdded < count; dayTx++) {
-      // Filter affordable expenses (ones that won't cause debt)
-      const affordableExpenses = expenseTransactions.filter(t => 
-        runningBalance + t.price >= 0
-      );
+      // Check if we need to set a new intention (when no active intention and cooldown passed)
+      if (!activeIntention && daysSinceIntentionComplete >= 2) {
+        // Find an expense that costs more than current balance
+        const unaffordableExpenses = expenseTransactions.filter(t => 
+          runningBalance + t.price < 0
+        );
+        
+        if (unaffordableExpenses.length > 0) {
+          // Select a weighted random unaffordable expense as the intention
+          const intentionItem = selectWeightedTransaction(unaffordableExpenses);
+          if (intentionItem) {
+            activeIntention = createIntention(intentionItem);
+            transactionIndex++;
+            statement.push({
+              id: transactionIndex,
+              transactionId: `intention-${intentionItem.id}`,
+              name: `New Intention: ${intentionItem.name} (${activeIntention.type})`,
+              balanceUpdate: 0,
+              newBalance: runningBalance,
+              dayOfWeek: dayName,
+              isNewDay: isFirstOfDay(dayName),
+              isIntention: true,
+              intentionType: activeIntention.type,
+              isIntentionStart: true,
+            });
+          }
+        }
+      }
 
-      // Combine income with affordable expenses for selection pool
-      const availableTransactions = [...incomeTransactions, ...affordableExpenses];
+      // Determine available transactions based on intention state
+      let availableTransactions = [];
+      
+      if (activeIntention) {
+        if (activeIntention.type === INTENTION_TYPE.INTENSE) {
+          // Intense intention: only earn money, no spending
+          availableTransactions = [...incomeTransactions];
+        } else {
+          // Standard intention: still buy other things
+          const affordableExpenses = expenseTransactions.filter(t => 
+            runningBalance + t.price >= 0 && t.id !== activeIntention.item.id
+          );
+          availableTransactions = [...incomeTransactions, ...affordableExpenses];
+          
+          // Check if teen gives up due to impulse spending (predetermined)
+          if (activeIntention.willGiveUp && affordableExpenses.length > 0 && Math.random() < GIVE_UP_TRIGGER_CHANCE) {
+            // Teen gives up on this intention
+            transactionIndex++;
+            statement.push({
+              id: transactionIndex,
+              transactionId: `intention-giveup-${activeIntention.item.id}`,
+              name: `Gave Up: ${activeIntention.item.name} (couldn't control spending)`,
+              balanceUpdate: 0,
+              newBalance: runningBalance,
+              dayOfWeek: dayName,
+              isNewDay: isFirstOfDay(dayName),
+              isIntention: true,
+              isIntentionGiveUp: true,
+            });
+            activeIntention = null;
+            daysSinceIntentionComplete = 0;
+            continue;
+          }
+        }
+      } else {
+        // No active intention: teen doesn't do chores (no motivation)
+        // Only expenses are available
+        const affordableExpenses = expenseTransactions.filter(t => 
+          runningBalance + t.price >= 0
+        );
+        availableTransactions = [...affordableExpenses];
+      }
 
       if (availableTransactions.length === 0) {
-        // No transactions available (shouldn't happen if there's at least one income source)
+        // No transactions available
         break;
       }
 
-      // Calculate total weight for weighted random selection
-      const totalWeight = availableTransactions.reduce((sum, t) => sum + t.odds, 0);
-
-      // Weighted random selection
-      let random = Math.random() * totalWeight;
-      let selectedTransaction = availableTransactions[0];
-
-      for (const transaction of availableTransactions) {
-        random -= transaction.odds;
-        if (random <= 0) {
-          selectedTransaction = transaction;
-          break;
-        }
-      }
+      const selectedTransaction = selectWeightedTransaction(availableTransactions);
+      if (!selectedTransaction) break;
 
       runningBalance += selectedTransaction.price;
       transactionIndex++;
@@ -100,10 +213,16 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
       });
 
       regularTransactionsAdded++;
+      
+      // Check if intention can be completed after this transaction
+      if (activeIntention && runningBalance >= Math.abs(activeIntention.item.price)) {
+        completeIntention(dayName, false);
+      }
     }
 
     // Move to the next day (cycle through the week)
     currentDay = (currentDay + 1) % 7;
+    daysSinceIntentionComplete++;
   }
 
   return statement;
@@ -342,22 +461,32 @@ export default function IncomeStatementGenerator() {
                     </tr>
                   </thead>
                   <tbody>
-                    {statement.map((row) => (
-                      <tr
-                        key={row.id}
-                        className={`${row.balanceUpdate > 0 ? 'income-row' : 'expense-row'} ${row.isNewDay ? 'new-day-row' : ''}`}
-                      >
-                        <td>{row.id}</td>
-                        <td className="day-cell">{row.isNewDay ? row.dayOfWeek : ''}</td>
-                        <td>{row.name}</td>
-                        <td className={row.balanceUpdate > 0 ? 'positive' : 'negative'}>
-                          {row.balanceUpdate > 0 ? '+' : ''}${row.balanceUpdate}
-                        </td>
-                        <td className={row.newBalance >= 0 ? 'positive' : 'negative'}>
-                          ${row.newBalance}
-                        </td>
-                      </tr>
-                    ))}
+                    {statement.map((row) => {
+                      const rowClasses = [
+                        row.balanceUpdate > 0 ? 'income-row' : row.balanceUpdate < 0 ? 'expense-row' : '',
+                        row.isNewDay ? 'new-day-row' : '',
+                        row.isIntention ? 'intention-row' : '',
+                        row.isIntentionStart ? 'intention-start-row' : '',
+                        row.isIntentionGiveUp ? 'intention-giveup-row' : '',
+                      ].filter(Boolean).join(' ');
+                      
+                      const balanceUpdateClass = row.balanceUpdate > 0 ? 'positive' : row.balanceUpdate < 0 ? 'negative' : '';
+                      const balanceUpdatePrefix = row.balanceUpdate > 0 ? '+' : '';
+                      
+                      return (
+                        <tr key={row.id} className={rowClasses}>
+                          <td>{row.id}</td>
+                          <td className="day-cell">{row.isNewDay ? row.dayOfWeek : ''}</td>
+                          <td>{row.name}</td>
+                          <td className={balanceUpdateClass}>
+                            {balanceUpdatePrefix}${row.balanceUpdate}
+                          </td>
+                          <td className={row.newBalance >= 0 ? 'positive' : 'negative'}>
+                            ${row.newBalance}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </section>
