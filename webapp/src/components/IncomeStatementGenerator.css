@@ -462,7 +462,8 @@
   white-space: nowrap;
 }
 
-.frequency-control select {
+.frequency-control select,
+.frequency-control input {
   flex: 1;
   padding: 0.25rem 0.5rem;
   border: 1px solid #ddd;
@@ -470,7 +471,8 @@
   font-size: 0.85rem;
 }
 
-.frequency-control select:disabled {
+.frequency-control select:disabled,
+.frequency-control input:disabled {
   background: #f0f0f0;
   cursor: not-allowed;
 }

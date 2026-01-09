@@ -37,8 +37,8 @@ export const defaultTransactions = [
   { id: 27, name: "Labubu", price: -40, gender: "Girl", active: true, odds: 1.0, frequency: "None" },
   { id: 28, name: "Stanley Cup", price: -50, gender: "Girl", active: true, odds: 1.0, frequency: "None" },
   { id: 29, name: "Boba", price: -8, gender: "Girl", active: true, odds: 1.0, frequency: "None" },
-  { id: 30, name: "Mow The Lawn", price: 10, gender: "Any", active: true, odds: 1.0, frequency: "1" },
-  { id: 31, name: "Clean The Garage", price: 30, gender: "Any", active: true, odds: 1.0, frequency: "1" },
+  { id: 30, name: "Mow The Lawn", price: 10, gender: "Any", active: true, odds: 1.0, frequency: 1 },
+  { id: 31, name: "Clean The Garage", price: 30, gender: "Any", active: true, odds: 1.0, frequency: 1 },
   { id: 32, name: "Deep Clean the Bathroom", price: 70, gender: "Any", active: true, odds: 1.0, frequency: 30 },
 ];
 
