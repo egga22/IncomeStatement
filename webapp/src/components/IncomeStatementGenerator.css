@@ -409,9 +409,15 @@
 
 .item-details {
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.item-details-row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.85rem;
 }
 
 .item-gender {
@@ -442,4 +448,54 @@
 .odds-control input:disabled {
   background: #f0f0f0;
   cursor: not-allowed;
+}
+
+.frequency-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.frequency-control label {
+  color: #666;
+  white-space: nowrap;
+}
+
+.frequency-control select {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.frequency-control select:disabled {
+  background: #f0f0f0;
+  cursor: not-allowed;
+}
+
+.export-section {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 2px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+}
+
+.export-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
