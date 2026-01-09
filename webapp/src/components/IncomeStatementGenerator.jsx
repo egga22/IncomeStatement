@@ -615,19 +615,15 @@ export default function IncomeStatementGenerator() {
                     </div>
                   </div>
                   <div className="frequency-control">
-                    <label>Frequency:</label>
-                    <select
-                      value={t.frequency}
-                      onChange={(e) => handleFrequencyChange(t.id, e.target.value === "None" ? "None" : parseInt(e.target.value))}
+                    <label>Frequency (days):</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={t.frequency === "None" ? "" : t.frequency}
+                      placeholder="None"
+                      onChange={(e) => handleFrequencyChange(t.id, e.target.value === "" ? "None" : parseInt(e.target.value) || "None")}
                       disabled={!t.active}
-                    >
-                      <option value="None">None</option>
-                      <option value="7">7 days</option>
-                      <option value="14">14 days</option>
-                      <option value="30">30 days</option>
-                      <option value="60">60 days</option>
-                      <option value="90">90 days</option>
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
