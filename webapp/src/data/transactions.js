@@ -29,7 +29,7 @@ export const defaultTransactions = [
   { id: 19, name: "Baseball Game Ticket", price: -30, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
   { id: 20, name: "Six Flags Visit", price: -50, gender: "Any", active: true, odds: 1.0, frequency: "None" },
   { id: 21, name: "Arcade Session", price: -15, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
-  { id: 22, name: "Movie Ticket", price: -15, gender: "Boy", active: true, odds: 1.0, frequency: 7 },
+  { id: 22, name: "Movie Ticket", price: -15, gender: "Any", active: true, odds: 1.0, frequency: 7 },
   { id: 23, name: "Robux", price: -25, gender: "Any", active: false, odds: 1.0, frequency: "None" },
   { id: 24, name: "Music Album", price: -10, gender: "Any", active: false, odds: 1.0, frequency: "None" },
   { id: 25, name: "Pokemon Card Pack", price: -15, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
