@@ -124,6 +124,13 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
   // Target number of transactions (not counting allowances and intention events)
   let regularTransactionsAdded = 0;
+  
+  // Safety mechanism to prevent infinite loops
+  // If we can't make progress after this many day cycles, stop trying
+  // Allow more days for larger transaction counts
+  const maxDaysWithoutProgress = Math.min(100, Math.max(30, count / 2));
+  let daysWithoutProgress = 0;
+  let lastRegularTransactionsCount = 0;
 
   while (regularTransactionsAdded < count) {
     const dayName = DAYS_OF_WEEK[currentDay];
@@ -156,7 +163,11 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
     for (let dayTx = 0; dayTx < transactionsForDay && regularTransactionsAdded < count; dayTx++) {
       // Check if we need to set a new intention (when no active intention and cooldown passed)
-      if (!activeIntention && daysSinceIntentionComplete >= 2) {
+      // Reduce cooldown to 0 if teen has no money and no affordable transactions (stuck state)
+      const isStuck = runningBalance <= 0 && expenseTransactions.every(t => runningBalance + t.price < 0);
+      const intentionCooldown = isStuck ? 0 : 2;
+      
+      if (!activeIntention && daysSinceIntentionComplete >= intentionCooldown) {
         // Find an expense that costs more than current balance
         // Use the base price for filtering - the actual tier price will be resolved when intention is created
         const unaffordableExpenses = expenseTransactions.filter(t => 
@@ -290,6 +301,19 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
     // Move to the next day (cycle through the week)
     currentDay = (currentDay + 1) % 7;
     daysSinceIntentionComplete++;
+    
+    // Track progress to prevent infinite loops
+    if (regularTransactionsAdded === lastRegularTransactionsCount) {
+      daysWithoutProgress++;
+      if (daysWithoutProgress >= maxDaysWithoutProgress) {
+        // Can't make more progress, stop generation
+        console.warn(`Stopping generation: only ${regularTransactionsAdded} transactions generated out of ${count} requested`);
+        break;
+      }
+    } else {
+      daysWithoutProgress = 0;
+      lastRegularTransactionsCount = regularTransactionsAdded;
+    }
   }
 
   return statement;
