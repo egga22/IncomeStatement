@@ -131,7 +131,8 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
   
   // Safety mechanism to prevent infinite loops
   // If we can't make progress after this many day cycles, stop trying
-  // Allow more days for larger transaction counts
+  // Formula: min(MAX, max(MIN, count/2))
+  // Examples: 5 txs = 30 days, 60 txs = 30 days, 120 txs = 60 days, 300 txs = 100 days
   const maxDaysWithoutProgress = Math.min(MAX_PROGRESS_TIMEOUT_DAYS, Math.max(MIN_PROGRESS_TIMEOUT_DAYS, count / 2));
   let daysWithoutProgress = 0;
   let lastRegularTransactionsCount = 0;
