@@ -11,6 +11,10 @@ const INTENSE_INTENTION_CHANCE = 0.1; // 10% chance an intention is intense
 const GIVE_UP_CHANCE = 0.1; // 10% chance to give up on standard intentions
 const GIVE_UP_TRIGGER_CHANCE = 0.3; // 30% chance per opportunity for a predetermined give-up to trigger
 
+// Infinite loop protection constants
+const MIN_PROGRESS_TIMEOUT_DAYS = 30; // Minimum days without progress before stopping
+const MAX_PROGRESS_TIMEOUT_DAYS = 100; // Maximum days without progress before stopping
+
 // Generate a random income statement based on current settings
 // Teens cannot go into debt - balance must stay >= 0
 function generateIncomeStatement(transactions, gender, count = 20, startingBalance = 0, allowanceAmount = 0, allowanceDay = 0) {
@@ -128,7 +132,7 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
   // Safety mechanism to prevent infinite loops
   // If we can't make progress after this many day cycles, stop trying
   // Allow more days for larger transaction counts
-  const maxDaysWithoutProgress = Math.min(100, Math.max(30, count / 2));
+  const maxDaysWithoutProgress = Math.min(MAX_PROGRESS_TIMEOUT_DAYS, Math.max(MIN_PROGRESS_TIMEOUT_DAYS, count / 2));
   let daysWithoutProgress = 0;
   let lastRegularTransactionsCount = 0;
 
@@ -163,9 +167,9 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
     for (let dayTx = 0; dayTx < transactionsForDay && regularTransactionsAdded < count; dayTx++) {
       // Check if we need to set a new intention (when no active intention and cooldown passed)
-      // Reduce cooldown to 0 if teen has no money and no affordable transactions (stuck state)
-      const hasAffordableExpenses = expenseTransactions.some(t => runningBalance + t.price >= 0);
-      const isStuck = !activeIntention && !hasAffordableExpenses;
+      // Reduce cooldown to 0 if teen has no active intention and no affordable transactions (stuck state)
+      const canAffordAnyExpense = expenseTransactions.some(t => runningBalance + t.price >= 0);
+      const isStuck = !activeIntention && !canAffordAnyExpense;
       const intentionCooldown = isStuck ? 0 : 2;
       
       if (!activeIntention && daysSinceIntentionComplete >= intentionCooldown) {
