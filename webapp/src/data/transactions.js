@@ -43,20 +43,25 @@ export function resolvePrice(transaction) {
       break;
     }
     case PRICING_TYPE.WEIGHTED_LIST: {
-      // Weighted selection from list
-      const totalWeight = config.options.reduce((sum, opt) => sum + opt.weight, 0);
+      // Weighted selection from list - supports both 'tiers' and legacy 'options' format
+      const items = config.tiers || config.options || [];
+      if (items.length === 0) {
+        resolvedPrice = transaction.price;
+        break;
+      }
+      const totalWeight = items.reduce((sum, item) => sum + (item.weight || 1), 0);
       let random = Math.random() * totalWeight;
-      for (const option of config.options) {
-        random -= option.weight;
+      for (const item of items) {
+        random -= item.weight || 1;
         if (random <= 0) {
-          resolvedPrice = option.price;
-          tier = option.tier || null;
+          resolvedPrice = item.price;
+          tier = item.name || item.tier || null;
           break;
         }
       }
       if (resolvedPrice === undefined) {
-        resolvedPrice = config.options[config.options.length - 1].price;
-        tier = config.options[config.options.length - 1].tier || null;
+        resolvedPrice = items[items.length - 1].price;
+        tier = items[items.length - 1].name || items[items.length - 1].tier || null;
       }
       break;
     }
@@ -158,12 +163,6 @@ export const defaultTransactions = [
     frequency: "None",
     pricing: {
       type: PRICING_TYPE.WEIGHTED_LIST,
-      options: [
-        { price: 20, weight: 2, tier: "Indie Game" },
-        { price: 40, weight: 3, tier: "Sale Game" },
-        { price: 70, weight: 4, tier: "Standard Game" },
-        { price: 100, weight: 1, tier: "Collector's Edition" },
-      ],
       tiers: [
         { name: "Indie Game", price: 20, weight: 2 },
         { name: "Sale Game", price: 40, weight: 3 },
@@ -185,12 +184,6 @@ export const defaultTransactions = [
     frequency: "None",
     pricing: {
       type: PRICING_TYPE.WEIGHTED_LIST,
-      options: [
-        { price: 40, weight: 2, tier: "Cheap Shoes" },
-        { price: 80, weight: 3, tier: "Old Shoes" },
-        { price: 120, weight: 4, tier: "Trendy Shoes" },
-        { price: 300, weight: 1, tier: "Limited Edition Shoes" },
-      ],
       tiers: [
         { name: "Cheap Shoes", price: 40, weight: 2 },
         { name: "Old Shoes", price: 80, weight: 3 },
@@ -212,12 +205,6 @@ export const defaultTransactions = [
     frequency: "None",
     pricing: {
       type: PRICING_TYPE.WEIGHTED_LIST,
-      options: [
-        { price: 30, weight: 3, tier: "Small Set" },
-        { price: 80, weight: 4, tier: "Medium Set" },
-        { price: 150, weight: 2, tier: "Large Set" },
-        { price: 400, weight: 1, tier: "Ultimate Set" },
-      ],
       tiers: [
         { name: "Small Set", price: 30, weight: 3 },
         { name: "Medium Set", price: 80, weight: 4 },
@@ -257,12 +244,6 @@ export const defaultTransactions = [
     frequency: "None",
     pricing: {
       type: PRICING_TYPE.WEIGHTED_LIST,
-      options: [
-        { price: 100, weight: 2, tier: "General Admission" },
-        { price: 200, weight: 3, tier: "Premium GA" },
-        { price: 300, weight: 3, tier: "VIP" },
-        { price: 500, weight: 1, tier: "Backstage Pass" },
-      ],
       tiers: [
         { name: "General Admission", price: 100, weight: 2 },
         { name: "Premium GA", price: 200, weight: 3 },

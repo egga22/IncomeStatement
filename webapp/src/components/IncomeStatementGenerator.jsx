@@ -674,7 +674,7 @@ export default function IncomeStatementGenerator() {
                       />
                       <span className="item-name">
                         {t.name}
-                        {hasVariablePricing && <span className="tier-badge" title="Variable Pricing">🏷️</span>}
+                        {hasVariablePricing && <span className="tier-badge" title="Variable Pricing" role="img" aria-label="Has variable pricing">🏷️</span>}
                       </span>
                     </label>
                     <span className={`item-price ${t.price > 0 ? 'positive' : 'negative'}`}>
@@ -732,19 +732,11 @@ export default function IncomeStatementGenerator() {
                                   </span>
                                 </div>
                               ))
-                            ) : t.pricing.type === PRICING_TYPE.LIST ? (
+                            ) : t.pricing.type === PRICING_TYPE.LIST && t.pricing.options ? (
                               t.pricing.options.map((price, idx) => (
                                 <div key={idx} className="tier-item">
                                   <span className="tier-name">Option {idx + 1}</span>
                                   <span className="tier-price">${price}</span>
-                                </div>
-                              ))
-                            ) : t.pricing.type === PRICING_TYPE.WEIGHTED_LIST ? (
-                              t.pricing.options.map((opt, idx) => (
-                                <div key={idx} className="tier-item">
-                                  <span className="tier-name">{opt.tier || `Option ${idx + 1}`}</span>
-                                  <span className="tier-price">${opt.price}</span>
-                                  <span className="tier-weight">(weight: {opt.weight})</span>
                                 </div>
                               ))
                             ) : t.pricing.type === PRICING_TYPE.RANGE ? (
