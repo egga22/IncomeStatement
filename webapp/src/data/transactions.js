@@ -4,35 +4,273 @@ export const INTENTION_TYPE = {
   INTENSE: 'intense',    // Teen only earns until goal is reached (rare)
 };
 
+// Variable pricing types
+// The database can specify pricing as:
+// - list: array of fixed price options
+// - range: min/max range
+// - weightedList: array of {price, weight} objects
+// - weightedRange: {min, max, weights} where weights can bias toward low/high
+// - advanced: custom function or complex configuration (for AI agent tweaks)
+export const PRICING_TYPE = {
+  FIXED: 'fixed',           // Single fixed price (default behavior)
+  LIST: 'list',             // Array of price options: [40, 80, 120, 300]
+  RANGE: 'range',           // Min/max range: {min: 40, max: 300}
+  WEIGHTED_LIST: 'weightedList', // Weighted options: [{price: 40, weight: 1}, ...]
+  WEIGHTED_RANGE: 'weightedRange', // Range with weight distribution: {min, max, bias: 'low'|'high'|'center'}
+  ADVANCED: 'advanced',     // Custom configuration for AI agents
+};
+
+// Helper function to resolve a price from variable pricing configuration
+export function resolvePrice(transaction) {
+  if (!transaction.pricing || transaction.pricing.type === PRICING_TYPE.FIXED) {
+    return { price: transaction.price, tier: null };
+  }
+
+  const config = transaction.pricing;
+  let resolvedPrice;
+  let tier = null;
+
+  switch (config.type) {
+    case PRICING_TYPE.LIST: {
+      // Simple list: pick random from array
+      const index = Math.floor(Math.random() * config.options.length);
+      resolvedPrice = config.options[index];
+      break;
+    }
+    case PRICING_TYPE.RANGE: {
+      // Random within range
+      resolvedPrice = Math.floor(Math.random() * (config.max - config.min + 1)) + config.min;
+      break;
+    }
+    case PRICING_TYPE.WEIGHTED_LIST: {
+      // Weighted selection from list - supports both 'tiers' and legacy 'options' format
+      const items = config.tiers || config.options || [];
+      if (items.length === 0) {
+        resolvedPrice = transaction.price;
+        break;
+      }
+      const totalWeight = items.reduce((sum, item) => sum + (item.weight || 1), 0);
+      let random = Math.random() * totalWeight;
+      for (const item of items) {
+        random -= item.weight || 1;
+        if (random <= 0) {
+          resolvedPrice = item.price;
+          tier = item.name || item.tier || null;
+          break;
+        }
+      }
+      if (resolvedPrice === undefined) {
+        resolvedPrice = items[items.length - 1].price;
+        tier = items[items.length - 1].name || items[items.length - 1].tier || null;
+      }
+      break;
+    }
+    case PRICING_TYPE.WEIGHTED_RANGE: {
+      // Range with bias toward low, high, or center
+      const { min, max, bias = 'center' } = config;
+      let factor = Math.random();
+      if (bias === 'low') {
+        factor = Math.pow(factor, 2); // Bias toward min
+      } else if (bias === 'high') {
+        factor = 1 - Math.pow(1 - factor, 2); // Bias toward max
+      } else if (bias === 'center') {
+        factor = (Math.random() + Math.random()) / 2; // Bell curve toward center
+      }
+      resolvedPrice = Math.floor(factor * (max - min + 1)) + min;
+      break;
+    }
+    case PRICING_TYPE.ADVANCED: {
+      // Advanced: use custom resolver function or fallback
+      if (config.resolver && typeof config.resolver === 'function') {
+        const result = config.resolver(transaction);
+        resolvedPrice = result.price;
+        tier = result.tier || null;
+      } else if (config.tiers && config.tiers.length > 0) {
+        // If tiers are defined, use weighted selection
+        const totalWeight = config.tiers.reduce((sum, t) => sum + (t.weight || 1), 0);
+        let random = Math.random() * totalWeight;
+        for (const tierOption of config.tiers) {
+          random -= tierOption.weight || 1;
+          if (random <= 0) {
+            resolvedPrice = tierOption.price;
+            tier = tierOption.name || null;
+            break;
+          }
+        }
+        if (resolvedPrice === undefined) {
+          resolvedPrice = config.tiers[config.tiers.length - 1].price;
+          tier = config.tiers[config.tiers.length - 1].name || null;
+        }
+      } else {
+        resolvedPrice = transaction.price;
+      }
+      break;
+    }
+    default:
+      resolvedPrice = transaction.price;
+  }
+
+  // Ensure price is negative for expenses (preserve the sign convention)
+  if (transaction.price < 0 && resolvedPrice > 0) {
+    resolvedPrice = -resolvedPrice;
+  } else if (transaction.price > 0 && resolvedPrice < 0) {
+    resolvedPrice = Math.abs(resolvedPrice);
+  }
+
+  return { price: resolvedPrice, tier };
+}
+
+// Helper to get tier display name for a resolved price
+export function getTierForPrice(transaction, price) {
+  if (!transaction.pricing) return null;
+  
+  const config = transaction.pricing;
+  const absPrice = Math.abs(price);
+  
+  // Check if tiers are defined
+  if (config.tiers) {
+    for (const tier of config.tiers) {
+      if (Math.abs(tier.price) === absPrice) {
+        return tier.name;
+      }
+    }
+  }
+  
+  // For weighted list, check options for tier info
+  if (config.type === PRICING_TYPE.WEIGHTED_LIST && config.options) {
+    for (const option of config.options) {
+      if (Math.abs(option.price) === absPrice) {
+        return option.tier || null;
+      }
+    }
+  }
+  
+  return null;
+}
+
 // Default transactions from the original spreadsheet
 // All items enabled by default with 1.0 probability modifier
 // frequency: None = no limit, or number of days between occurrences
+// pricing: optional variable pricing configuration with product tiers
 export const defaultTransactions = [
-  { id: 1, name: "Video Game", price: -70, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
+  { 
+    id: 1, 
+    name: "Video Game", 
+    price: -70, 
+    gender: "Boy", 
+    active: true, 
+    odds: 1.0, 
+    frequency: "None",
+    pricing: {
+      type: PRICING_TYPE.WEIGHTED_LIST,
+      tiers: [
+        { name: "Indie Game", price: 20, weight: 2 },
+        { name: "Sale Game", price: 40, weight: 3 },
+        { name: "Standard Game", price: 70, weight: 4 },
+        { name: "Collector's Edition", price: 100, weight: 1 },
+      ]
+    }
+  },
   { id: 2, name: "Art Supplies", price: -45, gender: "Any", active: true, odds: 1.0, frequency: "None" },
   { id: 3, name: "Trendy Jeans", price: -50, gender: "Any", active: true, odds: 1.0, frequency: "None" },
   { id: 4, name: "Anime Convention Ticket", price: -150, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
-  { id: 5, name: "Trendy Nike Sneakers", price: -120, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
+  { 
+    id: 5, 
+    name: "Trendy Nike Sneakers", 
+    price: -120, 
+    gender: "Boy", 
+    active: true, 
+    odds: 1.0, 
+    frequency: "None",
+    pricing: {
+      type: PRICING_TYPE.WEIGHTED_LIST,
+      tiers: [
+        { name: "Cheap Shoes", price: 40, weight: 2 },
+        { name: "Old Shoes", price: 80, weight: 3 },
+        { name: "Trendy Shoes", price: 120, weight: 4 },
+        { name: "Limited Edition Shoes", price: 300, weight: 1 },
+      ]
+    }
+  },
   { id: 6, name: "Trendy T-shirt", price: -25, gender: "Any", active: true, odds: 1.0, frequency: "None" },
   { id: 7, name: "Airsoft Gun", price: -30, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
   { id: 8, name: "Skateboard", price: -100, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
-  { id: 9, name: "New Lego Set", price: -80, gender: "Any", active: true, odds: 1.0, frequency: "None" },
+  { 
+    id: 9, 
+    name: "New Lego Set", 
+    price: -80, 
+    gender: "Any", 
+    active: true, 
+    odds: 1.0, 
+    frequency: "None",
+    pricing: {
+      type: PRICING_TYPE.WEIGHTED_LIST,
+      tiers: [
+        { name: "Small Set", price: 30, weight: 3 },
+        { name: "Medium Set", price: 80, weight: 4 },
+        { name: "Large Set", price: 150, weight: 2 },
+        { name: "Ultimate Set", price: 400, weight: 1 },
+      ]
+    }
+  },
   { id: 10, name: "Poster For Room", price: -60, gender: "Any", active: true, odds: 1.0, frequency: "None" },
   { id: 11, name: "PS5", price: -500, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
   { id: 12, name: "Trendy Haircut", price: -35, gender: "Any", active: true, odds: 1.0, frequency: 60 },
   { id: 13, name: "Trendy Baseball Cap", price: -25, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
-  { id: 14, name: "Gift For Friend", price: -25, gender: "Any", active: true, odds: 1.0, frequency: 30 },
+  { 
+    id: 14, 
+    name: "Gift For Friend", 
+    price: -25, 
+    gender: "Any", 
+    active: true, 
+    odds: 1.0, 
+    frequency: 30,
+    pricing: {
+      type: PRICING_TYPE.RANGE,
+      min: 10,
+      max: 50,
+    }
+  },
   { id: 15, name: "Gift for Girlfriend", price: -35, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
   { id: 16, name: "Trendy Graphic Hoodie", price: -45, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
   { id: 17, name: "Trendy Backpack", price: -45, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
-  { id: 18, name: "Music Festival Ticket", price: -300, gender: "Any", active: true, odds: 1.0, frequency: "None" },
+  { 
+    id: 18, 
+    name: "Music Festival Ticket", 
+    price: -300, 
+    gender: "Any", 
+    active: true, 
+    odds: 1.0, 
+    frequency: "None",
+    pricing: {
+      type: PRICING_TYPE.WEIGHTED_LIST,
+      tiers: [
+        { name: "General Admission", price: 100, weight: 2 },
+        { name: "Premium GA", price: 200, weight: 3 },
+        { name: "VIP", price: 300, weight: 3 },
+        { name: "Backstage Pass", price: 500, weight: 1 },
+      ]
+    }
+  },
   { id: 19, name: "Baseball Game Ticket", price: -30, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
   { id: 20, name: "Six Flags Visit", price: -50, gender: "Any", active: true, odds: 1.0, frequency: "None" },
   { id: 21, name: "Arcade Session", price: -15, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
   { id: 22, name: "Movie Ticket", price: -15, gender: "Any", active: true, odds: 1.0, frequency: 7 },
   { id: 23, name: "Robux", price: -25, gender: "Any", active: false, odds: 1.0, frequency: "None" },
   { id: 24, name: "Music Album", price: -10, gender: "Any", active: false, odds: 1.0, frequency: "None" },
-  { id: 25, name: "Pokemon Card Pack", price: -15, gender: "Boy", active: true, odds: 1.0, frequency: "None" },
+  { 
+    id: 25, 
+    name: "Pokemon Card Pack", 
+    price: -15, 
+    gender: "Boy", 
+    active: true, 
+    odds: 1.0, 
+    frequency: "None",
+    pricing: {
+      type: PRICING_TYPE.LIST,
+      options: [5, 15, 30, 50],
+    }
+  },
   { id: 26, name: "Funko Pop", price: -20, gender: "Girl", active: true, odds: 1.0, frequency: "None" },
   { id: 27, name: "Labubu", price: -40, gender: "Girl", active: true, odds: 1.0, frequency: "None" },
   { id: 28, name: "Stanley Cup", price: -50, gender: "Girl", active: true, odds: 1.0, frequency: "None" },
