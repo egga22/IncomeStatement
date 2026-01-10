@@ -164,7 +164,8 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
     for (let dayTx = 0; dayTx < transactionsForDay && regularTransactionsAdded < count; dayTx++) {
       // Check if we need to set a new intention (when no active intention and cooldown passed)
       // Reduce cooldown to 0 if teen has no money and no affordable transactions (stuck state)
-      const isStuck = runningBalance <= 0 && expenseTransactions.every(t => runningBalance + t.price < 0);
+      const hasAffordableExpenses = expenseTransactions.some(t => runningBalance + t.price >= 0);
+      const isStuck = !activeIntention && !hasAffordableExpenses;
       const intentionCooldown = isStuck ? 0 : 2;
       
       if (!activeIntention && daysSinceIntentionComplete >= intentionCooldown) {
