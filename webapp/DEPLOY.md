@@ -1,39 +1,15 @@
-# Deploying the Teensville Income Statement Generator
+# Deploying to Cloudflare Pages
 
-This guide explains how to deploy the Teensville Income Statement Generator.
+This guide explains how to deploy the Teensville Income Statement Generator to Cloudflare Pages.
 
-## Option A: GitHub Pages (Recommended)
-
-GitHub Pages deployment is configured automatically via GitHub Actions.
-
-### Setup Steps
-
-1. Go to your repository on GitHub
-2. Navigate to **Settings** → **Pages**
-3. Under **Source**, select **GitHub Actions**
-4. Push to the `main` branch to trigger automatic deployment
-
-The app will be available at: `https://<username>.github.io/IncomeStatement/`
-
-### Manual Trigger
-
-You can also manually trigger a deployment:
-1. Go to **Actions** tab in your repository
-2. Select **Deploy static content to Pages**
-3. Click **Run workflow**
-
----
-
-## Option B: Cloudflare Pages
-
-### Prerequisites
+## Prerequisites
 
 - A [Cloudflare account](https://dash.cloudflare.com/sign-up)
 - This repository connected to your GitHub account
 
-### Deployment Steps
+## Deployment Steps
 
-### Option B1: Connect via Cloudflare Dashboard
+### Option 1: Connect via Cloudflare Dashboard (Recommended)
 
 1. Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com/)
 2. Navigate to **Workers & Pages** in the left sidebar
@@ -52,7 +28,7 @@ You can also manually trigger a deployment:
 
 6. Click **Save and Deploy**
 
-### Option B2: Using Wrangler CLI
+### Option 2: Using Wrangler CLI
 
 1. Install Wrangler:
    ```bash
