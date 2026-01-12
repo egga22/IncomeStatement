@@ -11,6 +11,10 @@ const INTENSE_INTENTION_CHANCE = 0.1; // 10% chance an intention is intense
 const GIVE_UP_CHANCE = 0.1; // 10% chance to give up on standard intentions
 const GIVE_UP_TRIGGER_CHANCE = 0.3; // 30% chance per opportunity for a predetermined give-up to trigger
 
+// Infinite loop protection constants
+const MIN_PROGRESS_TIMEOUT_DAYS = 30; // Minimum days without progress before stopping
+const MAX_PROGRESS_TIMEOUT_DAYS = 100; // Maximum days without progress before stopping
+
 // Generate a random income statement based on current settings
 // Teens cannot go into debt - balance must stay >= 0
 function generateIncomeStatement(transactions, gender, count = 20, startingBalance = 0, allowanceAmount = 0, allowanceDay = 0) {
@@ -124,6 +128,14 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
   // Target number of transactions (not counting allowances and intention events)
   let regularTransactionsAdded = 0;
+  
+  // Safety mechanism to prevent infinite loops
+  // If we can't make progress after this many day cycles, stop trying
+  // Formula: min(MAX, max(MIN, count/2))
+  // Examples: 5 txs = 30 days, 60 txs = 30 days, 120 txs = 60 days, 300 txs = 100 days
+  const maxDaysWithoutProgress = Math.min(MAX_PROGRESS_TIMEOUT_DAYS, Math.max(MIN_PROGRESS_TIMEOUT_DAYS, count / 2));
+  let daysWithoutProgress = 0;
+  let lastRegularTransactionsCount = 0;
 
   while (regularTransactionsAdded < count) {
     const dayName = DAYS_OF_WEEK[currentDay];
@@ -156,7 +168,12 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
     for (let dayTx = 0; dayTx < transactionsForDay && regularTransactionsAdded < count; dayTx++) {
       // Check if we need to set a new intention (when no active intention and cooldown passed)
-      if (!activeIntention && daysSinceIntentionComplete >= 2) {
+      // Reduce cooldown to 0 if teen has no active intention and no affordable transactions (stuck state)
+      const canAffordAnyExpense = expenseTransactions.some(t => runningBalance + t.price >= 0);
+      const isStuck = !activeIntention && !canAffordAnyExpense;
+      const intentionCooldown = isStuck ? 0 : 2;
+      
+      if (!activeIntention && daysSinceIntentionComplete >= intentionCooldown) {
         // Find an expense that costs more than current balance
         // Use the base price for filtering - the actual tier price will be resolved when intention is created
         const unaffordableExpenses = expenseTransactions.filter(t => 
@@ -290,6 +307,19 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
     // Move to the next day (cycle through the week)
     currentDay = (currentDay + 1) % 7;
     daysSinceIntentionComplete++;
+    
+    // Track progress to prevent infinite loops
+    if (regularTransactionsAdded === lastRegularTransactionsCount) {
+      daysWithoutProgress++;
+      if (daysWithoutProgress >= maxDaysWithoutProgress) {
+        // Can't make more progress, stop generation
+        console.warn(`Stopping generation: only ${regularTransactionsAdded} transactions generated out of ${count} requested`);
+        break;
+      }
+    } else {
+      daysWithoutProgress = 0;
+      lastRegularTransactionsCount = regularTransactionsAdded;
+    }
   }
 
   return statement;
