@@ -4,17 +4,17 @@ This repository is configured to deploy the Teensville Income Statement Generato
 
 ## Quick Start
 
-The application is built to the `docs` folder and can be deployed directly to GitHub Pages.
+The application is built to the `docs` folder and deployed automatically via GitHub Actions.
 
 ### Enabling GitHub Pages
 
 1. Go to your repository's **Settings**
 2. Click **Pages** in the left sidebar
 3. Under "Build and deployment":
-   - **Source**: Deploy from a branch
-   - **Branch**: Select `main` (or your default branch)
-   - **Folder**: Select `/docs`
+   - **Source**: Select **GitHub Actions**
 4. Click **Save**
+
+The deployment workflow (`.github/workflows/deploy-pages.yml`) will automatically deploy the site when changes are pushed to the `main` branch.
 
 Your site will be published at: `https://teensville.github.io/IncomeStatement/`
 
