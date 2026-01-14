@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { defaultTransactions, defaultPersonalities, INTENTION_TYPE, PRICING_TYPE, resolvePrice } from '../data/transactions';
+import { defaultTransactions, defaultPersonalities, INTENTION_TYPE } from '../data/transactions';
 import './IncomeStatementGenerator.css';
 
 const DEFAULT_PERSONALITY_ID = 'default';
@@ -72,50 +72,28 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
   };
 
   // Helper to create an intention for an unaffordable expense
-  // When intention is created, a specific price is established (resolved from variable pricing)
   const createIntention = (item) => {
     const isIntense = Math.random() < INTENSE_INTENTION_CHANCE;
     const type = isIntense ? INTENTION_TYPE.INTENSE : INTENTION_TYPE.STANDARD;
     // For standard intentions, predetermine if they will give up
     const willGiveUp = type === INTENTION_TYPE.STANDARD && Math.random() < GIVE_UP_CHANCE;
-    
-    // Resolve the price at intention creation (establishes specific price they want)
-    const { price: resolvedPrice, tier } = resolvePrice(item);
-    
-    return { 
-      item, 
-      type, 
-      willGiveUp, 
-      resolvedPrice, // The specific price they're saving for
-      tier // The tier they selected (if applicable)
-    };
+    return { item, type, willGiveUp };
   };
 
   // Helper to complete an intention and add transaction to statement
   const completeIntention = (dayName, isFirstTransaction) => {
-    const price = activeIntention.resolvedPrice;
-    const tier = activeIntention.tier;
-    runningBalance += price;
+    runningBalance += activeIntention.item.price;
     transactionIndex++;
-    
-    // Build transaction name with tier info if applicable
-    let transactionName = activeIntention.item.name;
-    if (tier) {
-      transactionName = `${activeIntention.item.name} - ${tier}`;
-    }
-    
     statement.push({
       id: transactionIndex,
       transactionId: activeIntention.item.id,
-      name: `${transactionName} (Intention Complete!)`,
-      balanceUpdate: price,
+      name: `${activeIntention.item.name} (Intention Complete!)`,
+      balanceUpdate: activeIntention.item.price,
       newBalance: runningBalance,
       dayOfWeek: dayName,
       isNewDay: isFirstTransaction,
       isIntention: true,
       intentionType: activeIntention.type,
-      tier: tier,
-      resolvedPrice: price,
     });
     regularTransactionsAdded++;
     activeIntention = null;
@@ -144,8 +122,7 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
     }
 
     // Check if intention can be completed (balance reached)
-    // Use the resolved price that was established when the intention was created
-    if (activeIntention && runningBalance >= Math.abs(activeIntention.resolvedPrice)) {
+    if (activeIntention && runningBalance >= Math.abs(activeIntention.item.price)) {
       completeIntention(dayName, isFirstOfDay(dayName));
       
       if (regularTransactionsAdded >= count) break;
@@ -158,7 +135,6 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
       // Check if we need to set a new intention (when no active intention and cooldown passed)
       if (!activeIntention && daysSinceIntentionComplete >= 2) {
         // Find an expense that costs more than current balance
-        // Use the base price for filtering - the actual tier price will be resolved when intention is created
         const unaffordableExpenses = expenseTransactions.filter(t => 
           runningBalance + t.price < 0
         );
@@ -168,19 +144,11 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
           const intentionItem = selectWeightedTransaction(unaffordableExpenses);
           if (intentionItem) {
             activeIntention = createIntention(intentionItem);
-            
-            // Build intention name with tier/price info
-            let intentionName = intentionItem.name;
-            if (activeIntention.tier) {
-              intentionName = `${intentionItem.name} - ${activeIntention.tier}`;
-            }
-            const priceDisplay = Math.abs(activeIntention.resolvedPrice);
-            
             transactionIndex++;
             statement.push({
               id: transactionIndex,
               transactionId: `intention-${intentionItem.id}`,
-              name: `New Intention: ${intentionName} ($${priceDisplay}) (${activeIntention.type})`,
+              name: `New Intention: ${intentionItem.name} (${activeIntention.type})`,
               balanceUpdate: 0,
               newBalance: runningBalance,
               dayOfWeek: dayName,
@@ -188,8 +156,6 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
               isIntention: true,
               intentionType: activeIntention.type,
               isIntentionStart: true,
-              tier: activeIntention.tier,
-              targetPrice: activeIntention.resolvedPrice,
             });
           }
         }
@@ -246,43 +212,26 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
       const selectedTransaction = selectWeightedTransaction(availableTransactions);
       if (!selectedTransaction) break;
 
-      // Resolve variable pricing for the selected transaction
-      const { price: actualPrice, tier } = resolvePrice(selectedTransaction);
-      
-      // Ensure we can still afford this with the resolved price
-      if (actualPrice < 0 && runningBalance + actualPrice < 0) {
-        // Can't afford the resolved price, skip this transaction
-        continue;
-      }
-
-      runningBalance += actualPrice;
+      runningBalance += selectedTransaction.price;
       transactionIndex++;
       
       // Record when this transaction occurred
       lastOccurrence[selectedTransaction.id] = currentDay;
 
-      // Build transaction name with tier info if applicable
-      let transactionName = selectedTransaction.name;
-      if (tier) {
-        transactionName = `${selectedTransaction.name} - ${tier}`;
-      }
-
       statement.push({
         id: transactionIndex,
         transactionId: selectedTransaction.id,
-        name: transactionName,
-        balanceUpdate: actualPrice,
+        name: selectedTransaction.name,
+        balanceUpdate: selectedTransaction.price,
         newBalance: runningBalance,
         dayOfWeek: dayName,
         isNewDay: isFirstOfDay(dayName),
-        tier: tier,
-        resolvedPrice: actualPrice,
       });
 
       regularTransactionsAdded++;
       
       // Check if intention can be completed after this transaction
-      if (activeIntention && runningBalance >= Math.abs(activeIntention.resolvedPrice)) {
+      if (activeIntention && runningBalance >= Math.abs(activeIntention.item.price)) {
         completeIntention(dayName, false);
       }
     }
@@ -322,15 +271,6 @@ export default function IncomeStatementGenerator() {
   const [selectedPersonality, setSelectedPersonality] = useState(DEFAULT_PERSONALITY_ID);
   const [personalities] = useState(defaultPersonalities);
   const [showSettings, setShowSettings] = useState(false);
-  const [expandedItems, setExpandedItems] = useState({}); // Track which items have pricing expanded
-
-  // Toggle expanded state for an item's pricing tiers
-  const toggleExpanded = useCallback((id) => {
-    setExpandedItems(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
-  }, []);
 
   // Check if current settings differ from selected personality
   const hasModifications = useMemo(() => {
@@ -638,125 +578,56 @@ export default function IncomeStatementGenerator() {
           <p className="settings-help">
             Toggle items on/off and adjust weights. Higher weights = more likely to appear.
             Frequency limits how often an item can occur (in days, or "None" for unlimited).
-            Items with 🏷️ have variable pricing with product tiers.
           </p>
           <div className="items-grid">
-            {transactions.map(t => {
-              const hasVariablePricing = t.pricing && t.pricing.type !== PRICING_TYPE.FIXED;
-              const hasTiers = t.pricing && t.pricing.tiers && t.pricing.tiers.length > 0;
-              const isExpanded = expandedItems[t.id];
-              
-              // Get pricing display info
-              let priceDisplay = `${t.price > 0 ? '+' : ''}$${t.price}`;
-              if (hasVariablePricing) {
-                if (t.pricing.type === PRICING_TYPE.RANGE) {
-                  priceDisplay = `$${t.pricing.min} - $${t.pricing.max}`;
-                } else if (t.pricing.type === PRICING_TYPE.LIST) {
-                  const prices = t.pricing.options;
-                  priceDisplay = `$${Math.min(...prices)} - $${Math.max(...prices)}`;
-                } else if (t.pricing.type === PRICING_TYPE.WEIGHTED_LIST && t.pricing.options) {
-                  const prices = t.pricing.options.map(o => o.price);
-                  priceDisplay = `$${Math.min(...prices)} - $${Math.max(...prices)}`;
-                }
-              }
-              
-              return (
-                <div
-                  key={t.id}
-                  className={`item-card ${t.active ? 'active' : 'inactive'} ${t.price > 0 ? 'income-item' : 'expense-item'} ${hasVariablePricing ? 'has-tiers' : ''}`}
-                >
-                  <div className="item-header">
-                    <label className="item-toggle">
-                      <input
-                        type="checkbox"
-                        checked={t.active}
-                        onChange={() => handleTransactionToggle(t.id)}
-                      />
-                      <span className="item-name">
-                        {t.name}
-                        {hasVariablePricing && <span className="tier-badge" title="Variable Pricing" role="img" aria-label="Has variable pricing">🏷️</span>}
-                      </span>
-                    </label>
-                    <span className={`item-price ${t.price > 0 ? 'positive' : 'negative'}`}>
-                      {priceDisplay}
-                    </span>
-                  </div>
-                  <div className="item-details">
-                    <div className="item-details-row">
-                      <span className="item-gender">{t.gender}</span>
-                      <div className="odds-control">
-                        <label>Weight:</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="10"
-                          step="0.1"
-                          value={t.odds}
-                          onChange={(e) => handleOddsChange(t.id, e.target.value)}
-                          disabled={!t.active}
-                        />
-                      </div>
-                    </div>
-                    <div className="frequency-control">
-                      <label>Frequency (days):</label>
+            {transactions.map(t => (
+              <div
+                key={t.id}
+                className={`item-card ${t.active ? 'active' : 'inactive'} ${t.price > 0 ? 'income-item' : 'expense-item'}`}
+              >
+                <div className="item-header">
+                  <label className="item-toggle">
+                    <input
+                      type="checkbox"
+                      checked={t.active}
+                      onChange={() => handleTransactionToggle(t.id)}
+                    />
+                    <span className="item-name">{t.name}</span>
+                  </label>
+                  <span className={`item-price ${t.price > 0 ? 'positive' : 'negative'}`}>
+                    {t.price > 0 ? '+' : ''}${t.price}
+                  </span>
+                </div>
+                <div className="item-details">
+                  <div className="item-details-row">
+                    <span className="item-gender">{t.gender}</span>
+                    <div className="odds-control">
+                      <label>Weight:</label>
                       <input
                         type="number"
-                        min="1"
-                        value={t.frequency === "None" ? "" : t.frequency}
-                        placeholder="None"
-                        onChange={(e) => handleFrequencyChange(t.id, e.target.value === "" ? "None" : parseInt(e.target.value) || "None")}
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        value={t.odds}
+                        onChange={(e) => handleOddsChange(t.id, e.target.value)}
                         disabled={!t.active}
                       />
                     </div>
-                    
-                    {/* Variable Pricing / Product Tiers section */}
-                    {hasVariablePricing && (
-                      <div className="pricing-section">
-                        <button 
-                          className="expand-tiers-btn"
-                          onClick={() => toggleExpanded(t.id)}
-                          type="button"
-                        >
-                          {isExpanded ? '▼' : '▶'} Product Tiers
-                        </button>
-                        
-                        {isExpanded && (
-                          <div className="tiers-list">
-                            {hasTiers ? (
-                              t.pricing.tiers.map((tier, idx) => (
-                                <div key={idx} className="tier-item">
-                                  <span className="tier-name">{tier.name}</span>
-                                  <span className="tier-price">${tier.price}</span>
-                                  <span className="tier-weight">
-                                    (weight: {tier.weight || 1})
-                                  </span>
-                                </div>
-                              ))
-                            ) : t.pricing.type === PRICING_TYPE.LIST && t.pricing.options ? (
-                              t.pricing.options.map((price, idx) => (
-                                <div key={idx} className="tier-item">
-                                  <span className="tier-name">Option {idx + 1}</span>
-                                  <span className="tier-price">${price}</span>
-                                </div>
-                              ))
-                            ) : t.pricing.type === PRICING_TYPE.RANGE ? (
-                              <div className="tier-item range-info">
-                                <span>Range: ${t.pricing.min} to ${t.pricing.max}</span>
-                                {t.pricing.bias && <span className="tier-weight">(bias: {t.pricing.bias})</span>}
-                              </div>
-                            ) : (
-                              <div className="tier-item">
-                                <span>Custom pricing configuration</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                  </div>
+                  <div className="frequency-control">
+                    <label>Frequency (days):</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={t.frequency === "None" ? "" : t.frequency}
+                      placeholder="None"
+                      onChange={(e) => handleFrequencyChange(t.id, e.target.value === "" ? "None" : parseInt(e.target.value) || "None")}
+                      disabled={!t.active}
+                    />
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
           <div className="export-section">
             <button className="export-btn" onClick={handleExportPersonality}>
