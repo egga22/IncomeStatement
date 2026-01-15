@@ -47,7 +47,7 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
   const isFirstOfDay = (dayName) => 
     statement.length === 0 || statement[statement.length - 1].dayOfWeek !== dayName;
 
-  // Helper to check if current day is a weekend (Saturday=5, Sunday=6)
+  // Helper to check if current day is a weekend (Saturday=5, Sunday=6 in our 0-indexed array starting with Monday)
   const isWeekend = (dayIndex) => dayIndex === 5 || dayIndex === 6;
 
   // Helper to check if a transaction can occur based on frequency and weekend restrictions
@@ -114,9 +114,10 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
   while (regularTransactionsAdded < count) {
     const dayName = DAYS_OF_WEEK[currentDay];
+    const isNewDay = isFirstOfDay(dayName);
 
     // Add allowance if it's the allowance day and allowance is enabled
-    if (isFirstOfDay(dayName) && allowanceAmount > 0 && currentDay === allowanceDay) {
+    if (isNewDay && allowanceAmount > 0 && currentDay === allowanceDay) {
       runningBalance += allowanceAmount;
       transactionIndex++;
       statement.push({
@@ -253,8 +254,8 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
     // Track if we made progress this day
     if (transactionsAddedThisDay === 0) {
-      // Add an empty day marker to show every day
-      if (isFirstOfDay(dayName)) {
+      // Add an empty day marker to show every day (only if it's actually a new day)
+      if (isNewDay) {
         transactionIndex++;
         statement.push({
           id: transactionIndex,

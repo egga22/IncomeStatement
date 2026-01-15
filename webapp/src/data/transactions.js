@@ -27,7 +27,7 @@ export const defaultTransactions = [
   { id: 16, name: "Trendy Graphic Hoodie", price: -45, gender: "Boy", active: true, odds: 1.0, frequency: "None", weekendOnly: false },
   { id: 17, name: "Trendy Backpack", price: -45, gender: "Boy", active: true, odds: 1.0, frequency: "None", weekendOnly: false },
   { id: 18, name: "Music Festival Ticket", price: -300, gender: "Any", active: true, odds: 1.0, frequency: "None", weekendOnly: true },
-  { id: 19, name: "Baseball Game Ticket", price: -30, gender: "Boy", active: true, odds: 1.0, frequency: "None", weekendOnly: true },
+  { id: 19, name: "Baseball Game Ticket", price: -30, gender: "Boy", active: true, odds: 1.0, frequency: "None", weekendOnly: false },
   { id: 20, name: "Six Flags Visit", price: -50, gender: "Any", active: true, odds: 1.0, frequency: "None", weekendOnly: true },
   { id: 21, name: "Arcade Session", price: -15, gender: "Boy", active: true, odds: 1.0, frequency: "None", weekendOnly: true },
   { id: 22, name: "Movie Ticket", price: -15, gender: "Any", active: true, odds: 1.0, frequency: 7, weekendOnly: false },
