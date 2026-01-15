@@ -138,7 +138,7 @@ export const defaultPersonalities = [
         "frequency": 4
     }
 }
-}
+},
   {
     id: "gamer-boy",
     name: "Gamer Boy",
