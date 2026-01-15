@@ -102,6 +102,8 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
   // Target number of transactions (not counting allowances and intention events)
   let regularTransactionsAdded = 0;
+  let consecutiveDaysWithNoTransactions = 0;
+  const MAX_STUCK_DAYS = 7; // Safety: exit if no transactions for 7 days
 
   while (regularTransactionsAdded < count) {
     const dayName = DAYS_OF_WEEK[currentDay];
@@ -121,9 +123,13 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
       });
     }
 
+    // Track transactions added this day (including intention completions)
+    let transactionsAddedThisDay = 0;
+
     // Check if intention can be completed (balance reached)
     if (activeIntention && runningBalance >= Math.abs(activeIntention.item.price)) {
       completeIntention(dayName, isFirstOfDay(dayName));
+      transactionsAddedThisDay++;
       
       if (regularTransactionsAdded >= count) break;
     }
@@ -214,6 +220,7 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
       runningBalance += selectedTransaction.price;
       transactionIndex++;
+      transactionsAddedThisDay++;
       
       // Record when this transaction occurred
       lastOccurrence[selectedTransaction.id] = currentDay;
@@ -233,7 +240,20 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
       // Check if intention can be completed after this transaction
       if (activeIntention && runningBalance >= Math.abs(activeIntention.item.price)) {
         completeIntention(dayName, false);
+        transactionsAddedThisDay++;
       }
+    }
+
+    // Track if we made progress this day
+    if (transactionsAddedThisDay === 0) {
+      consecutiveDaysWithNoTransactions++;
+      // Safety check: exit if stuck (no transactions possible due to $0 balance, no income sources, etc.)
+      // 7 days chosen as threshold: enough time to cycle through the week, but prevents indefinite hang
+      if (consecutiveDaysWithNoTransactions >= MAX_STUCK_DAYS) {
+        break; // Exit the main while loop to prevent infinite hang
+      }
+    } else {
+      consecutiveDaysWithNoTransactions = 0; // Reset counter when progress is made
     }
 
     // Move to the next day (cycle through the week)
