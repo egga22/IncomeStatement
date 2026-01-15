@@ -136,7 +136,7 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
     // Check if intention can be completed (balance reached)
     if (activeIntention && runningBalance >= Math.abs(activeIntention.item.price)) {
-      completeIntention(dayName, isFirstOfDay(dayName));
+      completeIntention(dayName, isNewDay || isFirstOfDay(dayName));
       transactionsAddedThisDay++;
       
       if (regularTransactionsAdded >= count) break;
@@ -166,7 +166,7 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
               balanceUpdate: 0,
               newBalance: runningBalance,
               dayOfWeek: dayName,
-              isNewDay: isFirstOfDay(dayName),
+              isNewDay: isNewDay || isFirstOfDay(dayName),
               isIntention: true,
               intentionType: activeIntention.type,
               isIntentionStart: true,
@@ -200,7 +200,7 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
               balanceUpdate: 0,
               newBalance: runningBalance,
               dayOfWeek: dayName,
-              isNewDay: isFirstOfDay(dayName),
+              isNewDay: isNewDay || isFirstOfDay(dayName),
               isIntention: true,
               isIntentionGiveUp: true,
             });
@@ -240,7 +240,7 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
         balanceUpdate: selectedTransaction.price,
         newBalance: runningBalance,
         dayOfWeek: dayName,
-        isNewDay: isFirstOfDay(dayName),
+        isNewDay: isNewDay || isFirstOfDay(dayName),
       });
 
       regularTransactionsAdded++;
