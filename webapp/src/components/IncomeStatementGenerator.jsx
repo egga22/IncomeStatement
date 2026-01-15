@@ -47,8 +47,15 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
   const isFirstOfDay = (dayName) => 
     statement.length === 0 || statement[statement.length - 1].dayOfWeek !== dayName;
 
-  // Helper to check if a transaction can occur based on frequency
+  // Helper to check if current day is a weekend (Saturday=5, Sunday=6)
+  const isWeekend = (dayIndex) => dayIndex === 5 || dayIndex === 6;
+
+  // Helper to check if a transaction can occur based on frequency and weekend restrictions
   const canOccur = (transaction, currentDayIndex) => {
+    // Check weekend restriction
+    if (transaction.weekendOnly && !isWeekend(currentDayIndex)) return false;
+    
+    // Check frequency restriction
     if (transaction.frequency === "None") return true;
     if (!lastOccurrence[transaction.id]) return true;
     const daysSince = currentDayIndex - lastOccurrence[transaction.id];
@@ -246,6 +253,21 @@ function generateIncomeStatement(transactions, gender, count = 20, startingBalan
 
     // Track if we made progress this day
     if (transactionsAddedThisDay === 0) {
+      // Add an empty day marker to show every day
+      if (isFirstOfDay(dayName)) {
+        transactionIndex++;
+        statement.push({
+          id: transactionIndex,
+          transactionId: 'empty-day',
+          name: '(No transactions)',
+          balanceUpdate: 0,
+          newBalance: runningBalance,
+          dayOfWeek: dayName,
+          isNewDay: true,
+          isEmptyDay: true,
+        });
+      }
+      
       consecutiveDaysWithNoTransactions++;
       // Safety check: exit if stuck (no transactions possible due to $0 balance, no income sources, etc.)
       // 7 days chosen as threshold: enough time to cycle through the week, but prevents indefinite hang
@@ -274,6 +296,7 @@ function applyPersonality(baseTransactions, personality) {
         active: override.active !== undefined ? override.active : t.active,
         odds: override.odds !== undefined ? override.odds : t.odds,
         frequency: override.frequency !== undefined ? override.frequency : t.frequency,
+        weekendOnly: override.weekendOnly !== undefined ? override.weekendOnly : t.weekendOnly,
       };
     }
     return { ...t };
@@ -304,7 +327,7 @@ export default function IncomeStatementGenerator() {
     const baseTransactions = applyPersonality(defaultTransactions, personality);
     for (const t of transactions) {
       const base = baseTransactions.find(bt => bt.id === t.id);
-      if (base && (t.active !== base.active || t.odds !== base.odds || t.frequency !== base.frequency)) {
+      if (base && (t.active !== base.active || t.odds !== base.odds || t.frequency !== base.frequency || t.weekendOnly !== base.weekendOnly)) {
         return true;
       }
     }
@@ -348,6 +371,12 @@ export default function IncomeStatementGenerator() {
     );
   }, []);
 
+  const handleWeekendOnlyToggle = useCallback((id) => {
+    setTransactions(prev =>
+      prev.map(t => t.id === id ? { ...t, weekendOnly: !t.weekendOnly } : t)
+    );
+  }, []);
+
   const handleExportPersonality = useCallback(() => {
     // Create a personality object based on current settings
     const personalityName = prompt("Enter a name for this personality:");
@@ -365,7 +394,8 @@ export default function IncomeStatementGenerator() {
         const isDifferent = 
           t.active !== defaultTx.active || 
           t.odds !== defaultTx.odds ||
-          t.frequency !== defaultTx.frequency;
+          t.frequency !== defaultTx.frequency ||
+          t.weekendOnly !== defaultTx.weekendOnly;
         
         if (isDifferent) {
           items[t.id] = {
@@ -374,6 +404,9 @@ export default function IncomeStatementGenerator() {
           };
           if (t.frequency !== defaultTx.frequency) {
             items[t.id].frequency = t.frequency;
+          }
+          if (t.weekendOnly !== defaultTx.weekendOnly) {
+            items[t.id].weekendOnly = t.weekendOnly;
           }
         }
       }
@@ -559,6 +592,7 @@ export default function IncomeStatementGenerator() {
                         row.isIntention ? 'intention-row' : '',
                         row.isIntentionStart ? 'intention-start-row' : '',
                         row.isIntentionGiveUp ? 'intention-giveup-row' : '',
+                        row.isEmptyDay ? 'empty-day-row' : '',
                       ].filter(Boolean).join(' ');
                       
                       const balanceUpdateClass = row.balanceUpdate > 0 ? 'positive' : row.balanceUpdate < 0 ? 'negative' : '';
@@ -598,6 +632,7 @@ export default function IncomeStatementGenerator() {
           <p className="settings-help">
             Toggle items on/off and adjust weights. Higher weights = more likely to appear.
             Frequency limits how often an item can occur (in days, or "None" for unlimited).
+            Weekend Only restricts items to Saturday and Sunday only.
           </p>
           <div className="items-grid">
             {transactions.map(t => (
@@ -644,6 +679,17 @@ export default function IncomeStatementGenerator() {
                         onChange={(e) => handleFrequencyChange(t.id, e.target.value === "" ? "None" : parseInt(e.target.value) || "None")}
                         disabled={!t.active}
                       />
+                    </div>
+                    <div className="weekend-only-control">
+                      <label className="weekend-only-toggle">
+                        <input
+                          type="checkbox"
+                          checked={t.weekendOnly}
+                          onChange={() => handleWeekendOnlyToggle(t.id)}
+                          disabled={!t.active}
+                        />
+                        <span>Weekend Only</span>
+                      </label>
                     </div>
                   </div>
                 </div>
