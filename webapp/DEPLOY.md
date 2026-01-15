@@ -63,7 +63,19 @@ This guide explains how to deploy the Teensville Income Statement Generator to C
 
 ## Environment Variables
 
-No environment variables are required for this application.
+For Cloudflare Pages deployment, set the following environment variable:
+
+| Variable | Value |
+|----------|-------|
+| **BUILD_TARGET** | `cloudflare` |
+
+This ensures the app uses the correct base path (`/` for Cloudflare instead of `/IncomeStatement/` for GitHub Pages).
+
+To set this in Cloudflare Dashboard:
+1. Go to your Pages project
+2. Navigate to **Settings** → **Environment variables**
+3. Add `BUILD_TARGET` with value `cloudflare`
+4. Redeploy your project
 
 ## Custom Domain (Optional)
 

@@ -4,5 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/IncomeStatement/', // GitHub Pages base path for repository
+  // Use environment variable for base path, defaulting to GitHub Pages repository name
+  // For Cloudflare Pages, set BUILD_TARGET=cloudflare
+  base: process.env.BUILD_TARGET === 'cloudflare' ? '/' : '/IncomeStatement/',
 })
