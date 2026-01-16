@@ -66,7 +66,7 @@ This guide explains how to deploy the Teensville Income Statement Generator to C
 
 | Property | Value |
 |----------|-------|
-| **Build command** | `BUILD_TARGET=cloudflare npm run build` |
+| **Build command** | `npm run build:cloudflare` |
 | **Build output directory** | `webapp/dist` |
 | **Root directory** | (leave empty/default) |
 | **Node.js version** | 18+ (recommended) |
@@ -91,9 +91,15 @@ To set this in Cloudflare Dashboard for automatic builds:
 
 ### Manual Build
 
-When building locally with Wrangler CLI, always use:
+When building locally with Wrangler CLI, use the build script from the repository root:
 ```bash
-BUILD_TARGET=cloudflare npm run build
+npm run build:cloudflare
+```
+
+Or from the webapp directory:
+```bash
+cd webapp
+npm run build:cloudflare
 ```
 
 This ensures assets are referenced from the root path (`/assets/...`) instead of `/IncomeStatement/assets/...`.
@@ -112,9 +118,9 @@ After deployment, you can add a custom domain:
 ### Build Fails
 
 - Verify Node.js version is 18 or higher
-- Check that `BUILD_TARGET=cloudflare npm run build` works locally from the webapp directory
+- Check that `npm run build:cloudflare` works locally from the repository root
 - Ensure **Build output directory** is set to `webapp/dist`
-- Verify the `BUILD_TARGET` environment variable is set to `cloudflare`
+- Verify the `BUILD_TARGET` environment variable is set to `cloudflare` in Cloudflare Dashboard
 
 ### Page Not Loading or 404 Errors for Assets
 

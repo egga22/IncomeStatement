@@ -72,6 +72,8 @@ This means the application was built with the wrong base path for your deploymen
 - For Cloudflare: `npm run build:cloudflare`
 - For GitHub Pages: `npm run build`
 
+**Note**: The npm scripts work cross-platform (Windows/Mac/Linux). If you need to run commands manually without npm scripts, Windows users should use PowerShell or Git Bash instead of CMD.
+
 ## License
 
 See the repository license for details.
