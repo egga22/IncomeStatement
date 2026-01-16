@@ -40,7 +40,7 @@ The GitHub Actions workflow (`/.github/workflows/deploy-github-pages.yml`) autom
 | **Build command** | `npm run build` |
 | **Build directory** | `webapp` |
 | **Build output** | `webapp/dist` |
-| **Base path** | `/` (root path, GitHub Pages handles routing) |
+| **Base path** | `/IncomeStatement/` (required for project-based GitHub Pages) |
 | **Node.js version** | 20 |
 
 ## Manual Deployment (Alternative)
@@ -75,7 +75,7 @@ If you need to deploy manually without GitHub Actions:
 ### Page Not Loading or 404 Errors
 
 - Ensure GitHub Pages is configured to use **GitHub Actions** as the source
-- The workflow automatically sets the correct base path for GitHub Pages deployments
+- For project-based GitHub Pages (`<org>.github.io/<repo>`), the base path must be set to `/<repo>/`
 - Check that the workflow completed successfully in the **Actions** tab
 
 ### Assets Not Loading (MIME Type Errors)
