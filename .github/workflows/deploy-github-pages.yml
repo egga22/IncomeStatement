@@ -43,7 +43,7 @@ jobs:
         env:
           # Use root path for GitHub Actions deployments
           # GitHub Pages handles the repository path routing automatically
-          VITE_BASE_PATH: '/'
+          VITE_BASE_PATH: "/"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
