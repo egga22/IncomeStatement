@@ -40,7 +40,7 @@ The GitHub Actions workflow (`/.github/workflows/deploy-github-pages.yml`) autom
 | **Build command** | `npm run build` |
 | **Build directory** | `webapp` |
 | **Build output** | `webapp/dist` |
-| **Base path** | `/` (root path, GitHub Pages handles routing) |
+| **Base path** | `/IncomeStatement/` (repository name for GitHub Pages) |
 | **Node.js version** | 20 |
 
 ## Manual Deployment (Alternative)
@@ -98,6 +98,6 @@ The app will be available at `http://localhost:5173`
 
 ## Differences from Cloudflare Pages
 
-- **GitHub Pages**: Requires a base path matching the repository name (`/IncomeStatement/`)
-- **Cloudflare Pages**: Can use root path (`/`) - configured separately if needed
-- Both deployments use the same build process but may need different `base` configuration in `vite.config.js`
+- **GitHub Pages**: Uses base path `/IncomeStatement/` to match the repository name
+- **Cloudflare Pages**: Can use root path (`/`) - configured separately via `BUILD_TARGET` environment variable
+- Both deployments use the same build process but the base configuration automatically adjusts based on the environment
