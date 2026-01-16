@@ -19,7 +19,7 @@ This guide explains how to deploy the Teensville Income Statement Generator to C
 
 | Setting | Value |
 |---------|-------|
-| **Project name** | `teensville-income-statement` (or your preferred name) |
+| **Project name** | `income-statement` (or your preferred name) |
 | **Production branch** | `main` |
 | **Framework preset** | `None` (or `Vite` if available) |
 | **Build command** | `npm run build` |
@@ -59,7 +59,7 @@ This guide explains how to deploy the Teensville Income Statement Generator to C
    
    Or specify the project name:
    ```bash
-   wrangler pages deploy webapp/dist --project-name=teensville-income-statement
+   wrangler pages deploy webapp/dist --project-name=income-statement
    ```
 
 ## Build Configuration Summary
