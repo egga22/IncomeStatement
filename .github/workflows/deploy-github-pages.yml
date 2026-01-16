@@ -41,9 +41,9 @@ jobs:
           cd webapp
           npm run build
         env:
-          # Use root path for GitHub Actions deployments
-          # GitHub Pages handles the repository path routing automatically
-          VITE_BASE_PATH: "/"
+          # Use repository name path for GitHub Pages project sites
+          # Site is served from https://<org>.github.io/IncomeStatement/
+          VITE_BASE_PATH: "/IncomeStatement/"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
