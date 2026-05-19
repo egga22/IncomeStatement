@@ -23,7 +23,7 @@ This guide explains how to deploy the Teensville Income Statement Generator to C
 | **Production branch** | `main` |
 | **Framework preset** | `None` (or `Vite` if available) |
 | **Build command** | `npm run build` |
-| **Build output directory** | `webapp/dist` |
+| **Build output directory** | `dist` |
 | **Root directory** | (leave empty/default) |
 
 6. Click **Save and Deploy**
@@ -44,13 +44,6 @@ This guide explains how to deploy the Teensville Income Statement Generator to C
    ```bash
    npm run build:cloudflare
    ```
-   
-   Or from the webapp directory:
-   ```bash
-   cd webapp
-   npm install
-   npm run build:cloudflare
-   ```
 
 4. Deploy using wrangler.jsonc configuration from the root directory:
    ```bash
@@ -59,7 +52,7 @@ This guide explains how to deploy the Teensville Income Statement Generator to C
    
    Or specify the project name:
    ```bash
-   wrangler pages deploy webapp/dist --project-name=income-statement
+   wrangler pages deploy dist --project-name=income-statement
    ```
 
 ## Build Configuration Summary
@@ -67,7 +60,7 @@ This guide explains how to deploy the Teensville Income Statement Generator to C
 | Property | Value |
 |----------|-------|
 | **Build command** | `npm run build:cloudflare` |
-| **Build output directory** | `webapp/dist` |
+| **Build output directory** | `dist` |
 | **Root directory** | (leave empty/default) |
 | **Node.js version** | 18+ (recommended) |
 
@@ -96,11 +89,6 @@ When building locally with Wrangler CLI, use the build script from the repositor
 npm run build:cloudflare
 ```
 
-Or from the webapp directory:
-```bash
-cd webapp
-npm run build:cloudflare
-```
 
 This ensures assets are referenced from the root path (`/assets/...`) instead of `/IncomeStatement/assets/...`.
 
@@ -119,12 +107,12 @@ After deployment, you can add a custom domain:
 
 - Verify Node.js version is 18 or higher
 - Check that `npm run build:cloudflare` works locally from the repository root
-- Ensure **Build output directory** is set to `webapp/dist`
+- Ensure **Build output directory** is set to `dist`
 - Verify the `BUILD_TARGET` environment variable is set to `cloudflare` in Cloudflare Dashboard
 
 ### Page Not Loading or 404 Errors for Assets
 
-- Confirm **Build output directory** is set to `webapp/dist`
+- Confirm **Build output directory** is set to `dist`
 - **CRITICAL**: Verify the build was done with `BUILD_TARGET=cloudflare` environment variable set
 - The built `index.html` should reference assets with `/assets/...` (root path), not `/IncomeStatement/assets/...`
 - Check the deployment logs for any errors
@@ -135,7 +123,6 @@ After deployment, you can add a custom domain:
 To run the app locally before deploying:
 
 ```bash
-cd webapp
 npm install
 npm run dev
 ```

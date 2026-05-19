@@ -29,7 +29,7 @@ npm run build:cloudflare
 This application can be deployed to multiple platforms:
 
 - **GitHub Pages**: See [GITHUB_PAGES.md](GITHUB_PAGES.md) for instructions
-- **Cloudflare Pages/Workers**: See [webapp/DEPLOY.md](webapp/DEPLOY.md) for instructions
+- **Cloudflare Pages/Workers**: See [DEPLOY.md](DEPLOY.md) for instructions
 
 ### Important: Base Path Configuration
 
@@ -47,13 +47,15 @@ Make sure to build with the correct configuration for your deployment target:
 
 ```
 IncomeStatement/
-├── webapp/              # React application
-│   ├── src/            # Source code
-│   ├── public/         # Static assets
-│   ├── dist/           # Build output (generated)
-│   └── DEPLOY.md       # Cloudflare deployment guide
+├── App.jsx
+├── IncomeStatementGenerator.jsx
+├── transactions.js
+├── index.html
+├── DEPLOY.md           # Cloudflare deployment guide
 ├── GITHUB_PAGES.md     # GitHub Pages deployment guide
-└── package.json        # Root build scripts
+├── package.json        # App scripts
+├── package.root.json   # Previous root wrapper scripts
+└── dist/               # Build output (generated)
 ```
 
 ## Troubleshooting

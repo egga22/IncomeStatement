@@ -1,4 +1,4 @@
-import IncomeStatementGenerator from './components/IncomeStatementGenerator'
+import IncomeStatementGenerator from './IncomeStatementGenerator'
 import './App.css'
 
 function App() {
