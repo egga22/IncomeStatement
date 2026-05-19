@@ -638,10 +638,11 @@ export default function IncomeStatementGenerator() {
                       <label>Frequency (days):</label>
                       <input
                         type="number"
-                        min="1"
-                        value={t.frequency === "None" ? "" : t.frequency}
-                        placeholder="None"
-                        onChange={(e) => handleFrequencyChange(t.id, e.target.value === "" ? "None" : parseInt(e.target.value) || "None")}
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        value={t.odds}
+                        onChange={(e) => handleOddsChange(t.id, e.target.value)}
                         disabled={!t.active}
                       />
                     </div>
