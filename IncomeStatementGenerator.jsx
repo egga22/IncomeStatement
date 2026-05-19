@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { defaultTransactions, defaultPersonalities, INTENTION_TYPE } from '../data/transactions';
+import { defaultTransactions, defaultPersonalities, INTENTION_TYPE } from './transactions';
 import './IncomeStatementGenerator.css';
 
 const DEFAULT_PERSONALITY_ID = 'default';

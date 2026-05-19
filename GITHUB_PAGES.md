@@ -28,9 +28,9 @@ The repository includes a GitHub Actions workflow that automatically builds and 
 
 ## Build Configuration
 
-The GitHub Actions workflow (`/.github/workflows/deploy-github-pages.yml`) automatically:
+The GitHub Actions workflow (`./deploy-github-pages.yml`) automatically:
 - Installs Node.js and dependencies
-- Builds the application from the `webapp` directory
+- Builds the application from the repository root
 - Deploys the built files to GitHub Pages
 
 ### Build Settings Summary
@@ -38,8 +38,8 @@ The GitHub Actions workflow (`/.github/workflows/deploy-github-pages.yml`) autom
 | Property | Value |
 |----------|-------|
 | **Build command** | `npm run build` |
-| **Build directory** | `webapp` |
-| **Build output** | `webapp/dist` |
+| **Build directory** | repository root |
+| **Build output** | `dist` |
 | **Base path** | `/IncomeStatement/` (required for project-based GitHub Pages) |
 | **Node.js version** | 20 |
 
@@ -54,14 +54,13 @@ If you need to deploy manually without GitHub Actions:
 
 2. Build the application:
    ```bash
-   cd webapp
    npm install
    npm run build
    ```
 
 3. Deploy the dist folder:
    ```bash
-   npx gh-pages -d webapp/dist
+   npx gh-pages -d dist
    ```
 
 ## Troubleshooting
@@ -69,7 +68,7 @@ If you need to deploy manually without GitHub Actions:
 ### Build Fails
 
 - Verify Node.js version is 20 or higher
-- Check that `npm run build` works locally: `cd webapp && npm run build`
+- Check that `npm run build` works locally: `npm run build`
 - Review the Actions logs in the **Actions** tab
 
 ### Page Not Loading or 404 Errors
@@ -81,7 +80,7 @@ If you need to deploy manually without GitHub Actions:
 ### Assets Not Loading (MIME Type Errors)
 
 - This should be fixed by the Vite configuration using the correct base path
-- The built files in `webapp/dist` use absolute paths with the repository name
+- The built files in `dist` use absolute paths with the repository name
 - Ensure you're deploying the built files from `dist`, not the source files
 
 ## Local Development
@@ -89,7 +88,6 @@ If you need to deploy manually without GitHub Actions:
 To run the app locally before deploying:
 
 ```bash
-cd webapp
 npm install
 npm run dev
 ```

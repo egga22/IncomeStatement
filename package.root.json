@@ -1,0 +1,13 @@
+{
+  "name": "incomestatement",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Teensville Income Statement Generator",
+  "scripts": {
+    "dev": "npm run dev --prefix webapp",
+    "build": "npm install --prefix webapp && npm run build --prefix webapp",
+    "build:cloudflare": "npm install --prefix webapp && BUILD_TARGET=cloudflare npm run build --prefix webapp",
+    "lint": "npm run lint --prefix webapp",
+    "preview": "npm run preview --prefix webapp"
+  }
+}

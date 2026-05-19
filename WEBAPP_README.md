@@ -43,7 +43,6 @@ Pre-configured profiles with custom weights and item selections:
 ### Installation
 
 ```bash
-cd webapp
 npm install
 ```
 
@@ -76,17 +75,14 @@ npm run lint
 ## Project Structure
 
 ```
-webapp/
-├── src/
-│   ├── components/
-│   │   ├── IncomeStatementGenerator.jsx  # Main component
-│   │   └── IncomeStatementGenerator.css  # Styles
-│   ├── data/
-│   │   └── transactions.js               # Transaction data & presets
-│   ├── App.jsx                           # App entry point
-│   ├── App.css                           # App styles
-│   ├── main.jsx                          # React entry point
-│   └── index.css                         # Global styles
+IncomeStatement/
+├── IncomeStatementGenerator.jsx  # Main component
+├── IncomeStatementGenerator.css  # Styles
+├── transactions.js               # Transaction data & presets
+├── App.jsx                       # App entry point
+├── App.css                       # App styles
+├── main.jsx                      # React entry point
+├── index.css                     # Global styles
 ├── index.html
 ├── package.json
 └── vite.config.js
