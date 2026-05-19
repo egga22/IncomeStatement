@@ -313,12 +313,6 @@
   border-left: 4px solid #e91e63;
 }
 
-.empty-day-row {
-  background: #fafafa !important;
-  font-style: italic;
-  color: #999;
-}
-
 .day-cell {
   font-weight: 600;
   color: #667eea;
@@ -481,35 +475,6 @@
 .frequency-control input:disabled {
   background: #f0f0f0;
   cursor: not-allowed;
-}
-
-.weekend-only-control {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.weekend-only-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  color: #666;
-  font-size: 0.85rem;
-}
-
-.weekend-only-toggle input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.weekend-only-toggle input[type="checkbox"]:disabled {
-  cursor: not-allowed;
-}
-
-.weekend-only-toggle span {
-  user-select: none;
 }
 
 .export-section {
