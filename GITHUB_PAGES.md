@@ -1,55 +1,103 @@
-# GitHub Pages Deployment Guide
+# Deploying to GitHub Pages
 
-This repository is configured to deploy the Teensville Income Statement Generator to GitHub Pages.
+This guide explains how to deploy the Teensville Income Statement Generator to GitHub Pages.
 
-## Quick Start
+## Prerequisites
 
-The application is built to the `docs` folder and deployed automatically via GitHub Actions.
+- Repository hosted on GitHub
+- GitHub Actions enabled for the repository
+- GitHub Pages enabled in repository settings
 
-### Enabling GitHub Pages
+## Automatic Deployment
 
-1. Go to your repository's **Settings**
-2. Click **Pages** in the left sidebar
-3. Under "Build and deployment":
-   - **Source**: Select **GitHub Actions**
-4. Click **Save**
+The repository includes a GitHub Actions workflow that automatically builds and deploys the application to GitHub Pages whenever changes are pushed to the `main` branch.
 
-The deployment workflow (`.github/workflows/deploy-pages.yml`) will automatically deploy the site when changes are pushed to the `main` branch.
+### Setup Steps
 
-Your site will be published at: `https://teensville.github.io/IncomeStatement/`
+1. **Enable GitHub Pages** in your repository settings:
+   - Go to **Settings** → **Pages**
+   - Under **Source**, select **GitHub Actions**
+   
+2. **Push to main branch** or manually trigger the workflow:
+   - Any push to `main` branch will trigger automatic deployment
+   - Or go to **Actions** tab → **Deploy to GitHub Pages** → **Run workflow**
 
-## Building for Deployment
+3. **Access your deployed site**:
+   - Your site will be available at: `https://<username>.github.io/IncomeStatement/`
+   - For example: `https://teensville.github.io/IncomeStatement/`
 
-The project is already configured with the correct base path for GitHub Pages.
+## Build Configuration
 
-### Build Command
+The GitHub Actions workflow (`/.github/workflows/deploy-github-pages.yml`) automatically:
+- Installs Node.js and dependencies
+- Builds the application from the `webapp` directory
+- Deploys the built files to GitHub Pages
+
+### Build Settings Summary
+
+| Property | Value |
+|----------|-------|
+| **Build command** | `npm run build` |
+| **Build directory** | `webapp` |
+| **Build output** | `webapp/dist` |
+| **Base path** | `/IncomeStatement/` (required for project-based GitHub Pages) |
+| **Node.js version** | 20 |
+
+## Manual Deployment (Alternative)
+
+If you need to deploy manually without GitHub Actions:
+
+1. Install Wrangler or use the `gh-pages` npm package:
+   ```bash
+   npm install -g gh-pages
+   ```
+
+2. Build the application:
+   ```bash
+   cd webapp
+   npm install
+   npm run build
+   ```
+
+3. Deploy the dist folder:
+   ```bash
+   npx gh-pages -d webapp/dist
+   ```
+
+## Troubleshooting
+
+### Build Fails
+
+- Verify Node.js version is 20 or higher
+- Check that `npm run build` works locally: `cd webapp && npm run build`
+- Review the Actions logs in the **Actions** tab
+
+### Page Not Loading or 404 Errors
+
+- Ensure GitHub Pages is configured to use **GitHub Actions** as the source
+- For project-based GitHub Pages (`<org>.github.io/<repo>`), the base path must be set to `/<repo>/`
+- Check that the workflow completed successfully in the **Actions** tab
+
+### Assets Not Loading (MIME Type Errors)
+
+- This should be fixed by the Vite configuration using the correct base path
+- The built files in `webapp/dist` use absolute paths with the repository name
+- Ensure you're deploying the built files from `dist`, not the source files
+
+## Local Development
+
+To run the app locally before deploying:
 
 ```bash
-npm run build
-```
-
-This will:
-1. Install dependencies in the `webapp` folder
-2. Build the React application with Vite
-3. Output production-ready files to the `docs` folder
-4. Configure assets with the correct `/IncomeStatement/` base path
-
-### Development
-
-To run the app locally during development:
-
-```bash
+cd webapp
+npm install
 npm run dev
 ```
 
-This will start the development server at `http://localhost:5173`
+The app will be available at `http://localhost:5173`
 
-## Configuration
+## Differences from Cloudflare Pages
 
-The Vite configuration (`webapp/vite.config.js`) is set up with:
-- **Base path**: `/IncomeStatement/` (for GitHub Pages project sites)
-- **Output directory**: `../docs` (relative to webapp folder)
-
-## Alternative Deployment Options
-
-If you prefer other hosting platforms, see `webapp/DEPLOY.md` for Cloudflare Pages deployment instructions.
+- **GitHub Pages**: Requires a base path matching the repository name (`/IncomeStatement/`)
+- **Cloudflare Pages**: Can use root path (`/`) - configured separately if needed
+- Both deployments use the same build process but may need different `base` configuration in `vite.config.js`

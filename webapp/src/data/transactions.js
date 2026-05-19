@@ -52,6 +52,94 @@ export const defaultPersonalities = [
     items: {} // Empty means use default values
   },
   {
+  id: "standard",
+  name: "Standard",
+  description: "My personal preference",
+  gender: "Boy",
+  items: {
+    "1": {
+        "active": true,
+        "odds": 1,
+        "frequency": 14
+    },
+    "2": {
+        "active": false,
+        "odds": 1
+    },
+    "3": {
+        "active": false,
+        "odds": 1
+    },
+    "4": {
+        "active": false,
+        "odds": 1
+    },
+    "5": {
+        "active": true,
+        "odds": 1,
+        "frequency": 60
+    },
+    "7": {
+        "active": true,
+        "odds": 1,
+        "frequency": 7
+    },
+    "8": {
+        "active": true,
+        "odds": 1,
+        "frequency": 30
+    },
+    "9": {
+        "active": false,
+        "odds": 1
+    },
+    "10": {
+        "active": false,
+        "odds": 1
+    },
+    "13": {
+        "active": true,
+        "odds": 1,
+        "frequency": 14
+    },
+    "15": {
+        "active": true,
+        "odds": 1,
+        "frequency": 7
+    },
+    "16": {
+        "active": true,
+        "odds": 1,
+        "frequency": 7
+    },
+    "17": {
+        "active": true,
+        "odds": 1,
+        "frequency": 14
+    },
+    "18": {
+        "active": true,
+        "odds": 1,
+        "frequency": 60
+    },
+    "19": {
+        "active": true,
+        "odds": 1,
+        "frequency": 30
+    },
+    "20": {
+        "active": true,
+        "odds": 1,
+        "frequency": 30
+    },
+    "21": {
+        "active": true,
+        "odds": 3,
+        "frequency": 4
+    }
+}
+},
+  {
     id: "gamer-boy",
     name: "Gamer Boy",
     description: "Loves video games, tech, and gaming culture",
